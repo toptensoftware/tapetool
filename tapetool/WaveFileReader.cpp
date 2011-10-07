@@ -1,0 +1,20 @@
+//////////////////////////////////////////////////////////////////////////
+// WaveReader.cpp - implementation of CWaveReader class
+
+#include "precomp.h"
+
+#include "WaveFileReader.h"
+
+//////////////////////////////////////////////////////////////////////////
+// CWaveReader
+
+// Constructor
+CWaveReader::CWaveReader()
+{
+}
+
+// Destructor
+CWaveReader::~CWaveReader()
+{
+}
+
