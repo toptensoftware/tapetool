@@ -26,3 +26,4 @@ build.log
 *.psess
 *.sdf
 *.suo
+*.opensdf

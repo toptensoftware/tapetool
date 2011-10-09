@@ -1,0 +1,7 @@
+//////////////////////////////////////////////////////////////////////////
+// FileReader.cpp - implementation of CFileReader class
+
+#include "precomp.h"
+
+#include "FileReader.h"
+

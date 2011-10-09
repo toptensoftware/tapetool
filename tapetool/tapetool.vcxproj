@@ -11,19 +11,45 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BinaryReader.cpp" />
+    <ClCompile Include="CommandContext.cpp" />
+    <ClCompile Include="FileReader.cpp" />
+    <ClCompile Include="MachineType.cpp" />
+    <ClCompile Include="MachineTypeGeneric.cpp" />
+    <ClCompile Include="MachineTypeMicrobee.cpp" />
+    <ClCompile Include="MachineTypeTrs80.cpp" />
     <ClCompile Include="precomp.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ProcessBits.cpp" />
+    <ClCompile Include="ProcessBlocks.cpp" />
+    <ClCompile Include="ProcessBytes.cpp" />
+    <ClCompile Include="ProcessCycleKinds.cpp" />
+    <ClCompile Include="ProcessCycles.cpp" />
+    <ClCompile Include="ProcessSamples.cpp" />
     <ClCompile Include="tapetool.cpp" />
-    <ClCompile Include="WaveFileReader.cpp" />
+    <ClCompile Include="TapFileReader.cpp" />
+    <ClCompile Include="TextReader.cpp" />
+    <ClCompile Include="WaveReader.cpp" />
+    <ClCompile Include="WaveWriter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BinaryReader.h" />
+    <ClInclude Include="CommandContext.h" />
+    <ClInclude Include="FileReader.h" />
+    <ClInclude Include="MachineType.h" />
+    <ClInclude Include="MachineTypeGeneric.h" />
+    <ClInclude Include="MachineTypeMicrobee.h" />
+    <ClInclude Include="MachineTypeTrs80.h" />
     <ClInclude Include="precomp.h" />
-    <ClInclude Include="WaveFileReader.h" />
+    <ClInclude Include="TapFileReader.h" />
+    <ClInclude Include="TextReader.h" />
+    <ClInclude Include="WaveReader.h" />
+    <ClInclude Include="WaveWriter.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B13F1938-E4D8-4FFE-8C29-D1CCE89B425F}</ProjectGuid>
