@@ -38,7 +38,7 @@
     <ClCompile Include="WaveWriter.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="readme.txt" />
+    <None Include="..\readme.md" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BinaryReader.h" />
