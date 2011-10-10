@@ -4,9 +4,9 @@
 #include "precomp.h"
 
 #include "BinaryReader.h"
-#include "CommandContext.h"
+#include "Context.h"
 
-CBinaryReader::CBinaryReader(CCommandContext* ctx) : CFileReader(ctx)
+CBinaryReader::CBinaryReader(CContext* ctx) : CFileReader(ctx)
 {
 	_file = NULL;
 }
@@ -42,7 +42,7 @@ bool CBinaryReader::Open(const char* filename, Resolution res)
 
 const char* CBinaryReader::GetDataFormat()
 {
-	return NULL;
+	return _dataFormat;
 }
 
 Resolution CBinaryReader::GetResolution()
@@ -74,18 +74,7 @@ int CBinaryReader::ReadCycleLen()
 
 char CBinaryReader::ReadCycleKind()
 {
-	assert(false);
 	return 0;
-}
-
-void CBinaryReader::Analyze()
-{
-	// Ignore
-}
-
-void CBinaryReader::Prepare()
-{
-	// Ignore
 }
 
 void CBinaryReader::Seek(int position)

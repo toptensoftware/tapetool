@@ -10,11 +10,13 @@
 class CWaveReader : public CFileReader
 {
 public:
-			CWaveReader(CCommandContext* ctx);
+			CWaveReader(CContext* ctx);
 	virtual ~CWaveReader();
 
 	void Close();
 	int GetBytesPerSample();
+	int GetSampleRate();
+	int GetTotalSamples();
 
 	virtual bool Open(const char* filename, Resolution res);
 	virtual const char* GetDataFormat();
@@ -27,9 +29,12 @@ public:
 	virtual int ReadCycleLen();
 	virtual char ReadCycleKind();
 	virtual int LastCycleLen();
-	virtual void Analyze();
 	virtual void Prepare();
 
+	void SetShortCycleFrequency(int freq);
+	void SetCycleLengths(int shortCycleSamples, int longCycleSamples);
+	void SetDCOffset(int offset);
+	int GetDCOffset();
 
 	bool NextSample();
 	bool HaveSample();

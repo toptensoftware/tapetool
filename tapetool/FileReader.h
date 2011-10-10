@@ -4,7 +4,7 @@
 #ifndef __FILEREADER_H
 #define __FILEREADER_H
 
-class CCommandContext;
+class CContext;
 
 // Various resolutions at which data can be processed
 enum Resolution
@@ -23,7 +23,7 @@ enum Resolution
 class CFileReader
 {
 public:
-	CFileReader(CCommandContext* ctx);
+	CFileReader(CContext* ctx);
 
 	virtual bool Open(const char* fileName, Resolution res)=0;
 	virtual const char* GetDataFormat()=0;
@@ -33,11 +33,10 @@ public:
 	virtual int CurrentPosition()=0;
 	virtual int ReadCycleLen()=0;
 	virtual char ReadCycleKind()=0;
-	virtual void Analyze()=0;
-	virtual void Prepare()=0;
 	virtual void Seek(int position)=0;
 	virtual char* FormatDuration(int duration)=0;
 	virtual int LastCycleLen()=0;
+	virtual void Prepare() {};
 
 	virtual bool SyncToBit(bool verbose);
 	virtual int ReadBit(bool verbose = true);
@@ -46,7 +45,7 @@ public:
 
 	char ReadCycleKindChecked(bool verbose);
 
-	CCommandContext* _ctx;
+	CContext* _ctx;
 };
 
 #endif	// __FILEREADER_H

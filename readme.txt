@@ -24,6 +24,7 @@ TapeTool can:
 	two or mode recordings of the same file to be compared and merged using a text diff tool.
 *   Synthesize a new audio recording in 300 or 1200 baud.
 *   Generate a binary dump of the data ie: .bee and .tap files.
+*   Works with Microbee and TRS80
 
 Currently TapeTool only works with 300 baud input files, but it can generate 1200 baud wave files.
 
@@ -31,14 +32,21 @@ Currently TapeTool only works with 300 baud input files, but it can generate 120
 
 Usage: 
 
-    > tapetool [options] inputfile
+    > tapetool [options] inputfile [outputfile]
 
-TapeTool writes all text output to stdout, to capture to a text file generate a text file use 
-redirection eg: 
+The type of output file is determined by the output file extension 
 
-    > tapetool --blocks myfile.wav > myfile.txt
+    > tapetool --blocks --microbee myfile.wav myfile.tap
 
-The input file can be a .wav file or the captured text output of a previous run of tapetool. 
+    > tapetool --bytes --microbee myfile.wav myfile.txt
+
+The input file can be a .wav file, a binary file or the captured text output of a previous run of tapetool. 
+
+
+## Processing Wave Files
+
+In order to process or render cassette audio files, tapetool needs to know the type of machine the tape is 
+intended for.  Currently TRS-80 and Microbee are supported, see the command line arguments below.
 
 
 ## Text Format
@@ -47,7 +55,9 @@ The text output of tapetool follows a simple format:
 
 * Anything in [square brackets] is a comment.  Tapetool generates these to show position information 
 error details, resync data, header information etc...
-* On reading a text file, everything in square brackets is ignored.
+* A double slash to end of line is also considered a comment
+* On reading a text file, all comments are ignored except a square bracket comment [format:<type>] which
+   is used to store the file type of the original file dumped from. (tap, cas, etc...)
 * Dumped sample and cycle length data can't be re-read by tape tool.
 * Cycle kind data is rendered using the following characters:
 	- `S` = a short cycle (2400Hz)
@@ -60,6 +70,26 @@ error details, resync data, header information etc...
 * An input text file can contained mixed cyclekind, bit and byte data.
 
 ## Comamnd Line Arguments
+
+### --trs80
+
+Specifies the target machine type as "TRS80".  Only 500 baud system, basic and source files are supported.
+
+### --microbee
+
+Specifies the target machine type as "Microbee".  Only 300 baud input is supported, but 300 and 1200 baud
+rendering is supported.
+
+### --inputformat:<fmt>
+
+Set the format of the input data ("cas", "tap", etc...)
+
+### --wavestats:[from]
+
+Dumps various statistics about wave data including amplitude ranges, estimated long and short cycle
+lengths etc...
+
+The output of this processing kind can't be re-read by tapetool
 
 ### --samples[:from]
 
@@ -101,18 +131,31 @@ Using this option can:
 * eliminate erroneous zero crossings caused by noise
 * even out cycle lengths 
 
-### --analyze
+### --noanalyze
 
-By default, tapetool uses the sample rate of the file to determine the frequency of wave cycles.
-If the recording is at the wrong speed, this will often result in errors.  The --analyze option
-uses a simple heuristic to analyze the file and guess the cycle lengths of the short and long cycle
-kinds.
+By default, tapetool analyses audio files to automatically determine settings for how to best process
+the file. Use this option to prevent this auto analysis.
 
 ### --allowbadcycles
 
 Normally an out of range cycle kind `<` or `>` causes processing of bit data to fail.  Use this option
 to allow out of range cycle lengths.  TapeTool effective ignores these cycles and relies on the surrounding
 cycles to determine the bit.
+
+### --dcoffset
+
+Apply an offset to all samples.  Use with pulse based audio (eg:TRS80) to shift the pulses into the zero
+crossing range.  Also useful for shifting noisy silence/hiss out of the zero crossing range.
+
+### --cyclefreq
+
+Explicitly set the short cycle frequency in Hz.  (Default for Microbee is 2400Hz, TRS80 is 1024Hz)
+
+### --phaseshift
+
+Skips one audio cycle at the start of the file, cause the phase of each cycle to be inverted.  Generally this
+is not a particularly useful setting however it can help in some circumstances where tapetool sees out of phase
+wave cycles that appear as a combination of the long and short frequencies.
 
 ### --samplecount:N
 
@@ -125,12 +168,12 @@ to output the data consumed in performing these synchronization operations.
 
 Synchronization occurs at the start of the file and after any error.
 
-### --perline
+### --perline:N
 
-This option causes data elements (cyclekinds/bits/bytes) to output one per line.  
+This option causes data elements (cyclekinds/bits/bytes) to output N per line.  
 
-Use this option to get detailed sample position information, or combine with --noposinfo 
-to generate data suitabl for comparison with a diff program
+Use this option to get detailed sample position information, or combine --perline:1 with --noposinfo 
+to generate data suitable for comparison with a diff program
 
 ### --noposinfo
 
@@ -143,29 +186,6 @@ suppresses this information.
 When output raw sample data, inserts a new line at each detected zero crossing, making it easier to 
 inspect audio wave form data.
 
-### --binary:<file>
-
-Writes all processed bytes to a binary file.  
-
-When used with --bytes, all bytes are sent to the file
-
-When used with --blocks, only the data in the blocks is dumped but this can be controlled with 
-the --dgosheader and --tapfile options
-
-### --dgosheader
-
-Causes the combination of --blocks and --binary options to include the dgos header data in the generated file.
-
-### --tapfile
-
-Causes the combination of --blocks and --binary options to generate a .tap file.
-
-
-### --render:<file>
-
-Render a wave file containing all processed data.
-
-Combine with --cyclekind, --bits, --bytes or --blocks to control the data rendered.
 
 ### --leadingsilence:N
 
@@ -203,39 +223,39 @@ Renders the wave as a sine waves instead of square waves.
 
 Dump the blocks from a clean working wave file:
 
-	> tapetool --blocks myfile.wav
+	> tapetool myfile.wav
 
 Dump the raw bytes from a wave file to a text file
 
-	> tapetool --bytes myfile.wav > myfile.bytes.txt
+	> tapetool --bytes --microbee myfile.wav myfile.bytes.txt
 
 Dump the bits from a wave file, smoothing the audio data over 3 samples and using heuristics
 to calculate cycle lengths by analying the wave data rather than relying on the sample rate:
 
-	> tapetool --bits --smooth:3 --analyze myfile.wav > myfile.bits.txt
+	> tapetool --bits --microbee --smooth:3 --analyze myfile.wav myfile.bits.txt
 
 Convert the output of the previous example into a series of bytes:
 
-	> tapetool --bytes myfile.bits.txt > myfile.bytes.txt
+	> tapetool --bytes --microbee myfile.bits.txt myfile.bytes.txt
 
 Convert a byte stream into blocks and check the checksums, dump header info etc...
 
-	> tapetool --blocks myfile.bytes.txt
+	> tapetool --blocks --microbee myfile.bytes.txt
 
 Render a wave file:
 
-	> tapetool --blocks myfile.bytes.txt --render:myfile.wave
+	> tapetool --blocks --microbee myfile.bytes.txt myfile.wave
 
 Create a ubee512 .tap file directly from a wave file:
 	
-	> tapetool --blocks myfile.wav --binary:myfile.tap --tapfile
+	> tapetool --blocks --microbee myfile.wav myfile.tap
 
 Create a NanoWasp .mac file from text file: (take note of the header info and enter it
 into NanoWasp web page where you configure the tape file).
 
-	> tapetool --blocks myfile.bits.txt --binary:myfile.mac
+	> tapetool --blocks --microbee myfile.bits.txt myfile.mac
 
 Create an arbitrary format binary file from a text file of bits:
 
-	> tapetool --bytes myfile.bits.txt --binary:myfile.bin
+	> tapetool --bytes --microbee myfile.bits.txt myfile.bin
 

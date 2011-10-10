@@ -1,30 +1,31 @@
 //////////////////////////////////////////////////////////////////////////
-// CommandContext.h - declaration of CWaveReader class
+// Context.h - declaration of CWaveReader class
 
-#ifndef __COMMANDCONTEXT_H
-#define __COMMANDCONTEXT_H
+#ifndef __CONTEXT_H
+#define __CONTEXT_H
 
 #include "FileReader.h"
 #include "WaveReader.h"
 #include "MachineType.h"
 #include "WaveWriter.h"
 
-class CCommandContext;
+class CCommand;
+class CContext;
 
 
-class CCommandContext
+class CContext
 {
 public:
 // Construction
-			CCommandContext();
-	virtual ~CCommandContext();
+			CContext();
+	virtual ~CContext();
 
 // Command line arguments
 	char* files[10];
 	int file_count;
 	int smoothing;
 	bool showSyncData;
-	bool perLineMode;
+	int perLine;
 	bool showPositionInfo;
 	int from;
 	int samples;
@@ -32,21 +33,21 @@ public:
 	bool allowBadCycles;
 	int leadingSilence;
 	int leadingZeros;
-	bool analyzeCycles;
+	bool autoAnalyze;
 	int renderSampleRate;
 	int renderSampleSize;
 	int renderVolume;
 	int renderBaud;
 	bool renderSine;
-	int dc_offset;
-	int cycle_freq;
+	char* dc_offset;
+	char* cycle_freq;
+	bool phase_shift;
 	CMachineType* machine;
 	int byteWrapIndex;
-	bool phaseShift;
 	const char* outputExtension;
 	const char* inputFormat;
 
-	fnCmd cmd;
+	CCommand* cmd;
 
 // The input and output files
 	CFileReader* file;
@@ -74,5 +75,5 @@ protected:
 	bool OpenBinaryFile(const char* filename);
 };
 
-#endif	// __COMMANDCONTEXT_H
+#endif	// __CONTEXT_H
 

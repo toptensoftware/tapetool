@@ -10,7 +10,7 @@
 class CTextReader : public CFileReader
 {
 public:
-			CTextReader(CCommandContext* ctx);
+			CTextReader(CContext* ctx);
 	virtual ~CTextReader();
 
 
@@ -37,8 +37,6 @@ public:
 	virtual int CurrentPosition();
 	virtual int ReadCycleLen();
 	virtual char ReadCycleKind();
-	virtual void Analyze();
-	virtual void Prepare();
 	virtual void Seek(int position);
 	virtual char* FormatDuration(int duration);
 	virtual int LastCycleLen();

@@ -4,7 +4,9 @@
 #include "precomp.h"
 
 #include "MachineTypeGeneric.h"
-#include "CommandContext.h"
+#include "Context.h"
+
+int ProcessWaveStats(CContext* c);
 
 CMachineTypeGeneric::CMachineTypeGeneric()
 {
@@ -14,10 +16,10 @@ CMachineTypeGeneric::~CMachineTypeGeneric()
 {
 }
 
-bool CMachineTypeGeneric::OnPreProcess(CCommandContext* c, Resolution resProcess)
+bool CMachineTypeGeneric::OnPreProcess(CContext* c, Resolution resProcess)
 {
 	// Check the input file doesn't have a resolution finer than 1 bit
-	if (resProcess < resBytes)
+	if (resProcess < resBytes && c->cmd->DoesTranslateFromWaveData())
 	{
 		fprintf(stderr, "You must specify a machine type when working with audio or bit resolution data\n");
 		return false;

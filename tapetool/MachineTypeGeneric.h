@@ -6,8 +6,8 @@
 
 #include "MachineType.h"
 #include "FileReader.h"
-
-int ProcessBytes(CCommandContext* c);
+#include "CommandBytes.h"
+#include "Context.h"
 
 class CMachineTypeGeneric : public CMachineType
 {
@@ -17,11 +17,15 @@ public:
 
 	virtual bool IsGeneric() { return true; }
 
-	virtual bool OnPreProcess(CCommandContext* c, Resolution res);
+	virtual bool OnPreProcess(CContext* c, Resolution res);
 
 	virtual const char* GetTapeFormatName()
 	{
 		return NULL;
+	}
+
+	virtual void PrepareWaveMetrics(CContext* c, CWaveReader* wf)
+	{
 	}
 
 	virtual bool SyncToBit(CFileReader* reader, bool verbose)
@@ -56,19 +60,10 @@ public:
 	{
 	}
 
-	virtual int ProcessBlocks(CCommandContext* c)
+	virtual int ProcessBlocks(CContext* c)
 	{
-		return ProcessBytes(c);
-	}
-
-	virtual int CycleFrequency()
-	{
-		return 1;
-	}
-
-	virtual int DcOffset(CWaveReader* wave)
-	{
-		return 0;
+		CCommandBytes del(c);
+		return del.Process();
 	}
 
 	virtual bool CanRenderSquare() { return false; }

@@ -5,7 +5,7 @@
 
 #include "TapFileReader.h"
 
-CTapFileReader::CTapFileReader(CCommandContext* ctx) : CBinaryReader(ctx)
+CTapFileReader::CTapFileReader(CContext* ctx) : CBinaryReader(ctx)
 {
 }
 

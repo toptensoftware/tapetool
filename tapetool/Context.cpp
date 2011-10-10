@@ -1,9 +1,9 @@
 //////////////////////////////////////////////////////////////////////////
-// CommandContext.cpp - implementation of CCommandContext class
+// Context.cpp - implementation of CContext class
 
 #include "precomp.h"
 
-#include "CommandContext.h"
+#include "Context.h"
 #include "WaveReader.h"
 #include "TextReader.h"
 #include "BinaryReader.h"
@@ -13,22 +13,22 @@
 #include "MachineTypeMicrobee.h"
 #include "MachineTypeTrs80.h"
 
-// External functions see ProcessXXX.cpp
-int ProcessSamples(CCommandContext* c);
-int ProcessCycles(CCommandContext* c);
-int ProcessCycleKinds(CCommandContext* c);
-int ProcessBits(CCommandContext* c);
-int ProcessBytes(CCommandContext* c);
-int ProcessBlocks(CCommandContext* c);
+#include "CommandWaveStats.h"
+#include "CommandSamples.h"
+#include "CommandCycles.h"
+#include "CommandCycleKinds.h"
+#include "CommandBits.h"
+#include "CommandBytes.h"
+#include "CommandBlocks.h"
 
 
 // Constructor
-CCommandContext::CCommandContext()
+CContext::CContext()
 {
 	file_count = 0;
 	smoothing = 0;
 	showSyncData = false;
-	perLineMode = false;
+	perLine = 0;
 	showPositionInfo = true;
 	from = 0;
 	samples = 0;
@@ -36,7 +36,7 @@ CCommandContext::CCommandContext()
 	allowBadCycles = false;
 	leadingSilence = 2;
 	leadingZeros = 0;
-	analyzeCycles = false;
+	autoAnalyze = true;
 	renderSampleRate = 24000;
 	renderSampleSize = 8;
 	renderVolume = 10;
@@ -44,23 +44,23 @@ CCommandContext::CCommandContext()
 	renderSine = false;
 	dc_offset = 0;
 	cycle_freq = 0;
-	phaseShift = false;
+	phase_shift = false;
 	inputFormat = NULL;
 
 	byteWrapIndex = 0;
-
+	cmd = NULL;
 	machine = NULL;
 	file = NULL;
 	renderFile = NULL;
 	binaryFile = NULL;
 }
 
-CCommandContext::~CCommandContext()
+CContext::~CContext()
 {
 
 }
 
-bool CCommandContext::OpenFiles(Resolution res)
+bool CContext::OpenFiles(Resolution res)
 {
 	if (file_count==0)
 	{
@@ -85,8 +85,11 @@ bool CCommandContext::OpenFiles(Resolution res)
 	if (!machine->OnPreProcess(this, res))
 		return false;
 
+	// Now prepare the input file
+	file->Prepare();
+
 	// Display the input format
-	printf("[format:%s]", GetInputFormat());
+	printf("[format:%s]\n", GetInputFormat());
 
 	// Ready
 	return true;
@@ -94,7 +97,7 @@ bool CCommandContext::OpenFiles(Resolution res)
 
 
 // Opens the specified input file, could be a wav or txt file
-bool CCommandContext::OpenInputFile(Resolution res)
+bool CContext::OpenInputFile(Resolution res)
 {
 	char* ext = strrchr(files[0], '.');
 
@@ -119,7 +122,7 @@ bool CCommandContext::OpenInputFile(Resolution res)
 	return file->Open(files[0], res);
 }
 
-bool CCommandContext::OpenOutputFile(Resolution res)
+bool CContext::OpenOutputFile(Resolution res)
 {
 	// Output file?
 	if (file_count<2)
@@ -163,7 +166,7 @@ bool CCommandContext::OpenOutputFile(Resolution res)
 }
 
 // Create the rendering file
-bool CCommandContext::OpenRenderFile(const char* filename)
+bool CContext::OpenRenderFile(const char* filename)
 {
 	// Create the render file
 	renderFile = new CWaveWriter();
@@ -193,7 +196,7 @@ bool CCommandContext::OpenRenderFile(const char* filename)
 }
 
 // Create the binary file
-bool CCommandContext::OpenBinaryFile(const char* filename)
+bool CContext::OpenBinaryFile(const char* filename)
 {
 	binaryFile = fopen(filename, "wb");
 	if (binaryFile==NULL)
@@ -207,7 +210,7 @@ bool CCommandContext::OpenBinaryFile(const char* filename)
 
 		
 // Close any open files
-void CCommandContext::CloseFiles()
+void CContext::CloseFiles()
 {
 	if (file!=NULL)
 	{
@@ -229,20 +232,20 @@ void CCommandContext::CloseFiles()
 	}
 }
 
-bool CCommandContext::IsOutputKind(const char* ext)
+bool CContext::IsOutputKind(const char* ext)
 {
 	return _strcmpi(outputExtension, ext)==0;
 }
 
 
-void CCommandContext::ResetByteDump()
+void CContext::ResetByteDump()
 {
 	byteWrapIndex = 0;
 }
 
-void CCommandContext::DumpByte(int byte)
+void CContext::DumpByte(int byte)
 {
-	if ((byteWrapIndex!=0 && ((byteWrapIndex % 16)==0) || perLineMode))
+	if ((byteWrapIndex!=0 && ((byteWrapIndex % (perLine==0 ? 16 : perLine))==0)))
 	{
 		printf("\n");
 	}
@@ -251,10 +254,9 @@ void CCommandContext::DumpByte(int byte)
 }
 
 
-int CCommandContext::Run(int argc,char **argv)
+int CContext::Run(int argc,char **argv)
 {
 	// Process command line arguments
-	fnCmd cmd = NULL;
 	for (int i=1; i<argc; i++)
 	{
 		char* arg = argv[i];
@@ -288,13 +290,23 @@ int CCommandContext::Run(int argc,char **argv)
 				val = v1+1;
 			}
 
-			if (_strcmpi(arg, "analyze")==0)
+			if (_strcmpi(arg, "noanalyze")==0)
 			{
-				analyzeCycles = true;
+				autoAnalyze = false;
+			}
+			else if (_strcmpi(arg, "wavestats")==0)
+			{
+				autoAnalyze = false;
+				cmd = new CCommandWaveStats(this);
+
+				if (val!=NULL)
+				{
+					from = atoi(val);
+				}
 			}
 			else if (_strcmpi(arg, "samples")==0)
 			{
-				cmd = ProcessSamples;
+				cmd = new CCommandSamples(this);
 
 				if (val!=NULL)
 				{
@@ -305,23 +317,23 @@ int CCommandContext::Run(int argc,char **argv)
 			}
 			else if (_strcmpi(arg, "cycles")==0)
 			{
-				cmd = ProcessCycles;
+				cmd = new CCommandCycles(this);
 			}
 			else if (_strcmpi(arg, "cyclekinds")==0)
 			{
-				cmd = ProcessCycleKinds;
+				cmd = new CCommandCycleKinds(this);
 			}
 			else if (_strcmpi(arg, "bits")==0)
 			{
-				cmd = ProcessBits;
+				cmd = new CCommandBits(this);
 			}
 			else if (_strcmpi(arg, "bytes")==0)
 			{
-				cmd = ProcessBytes;
+				cmd = new CCommandBytes(this);
 			}
 			else if (_strcmpi(arg, "blocks")==0)
 			{
-				cmd = ProcessBlocks;
+				cmd = new CCommandBlocks(this);
 			}
 			else if (_strcmpi(arg, "smooth")==0)
 			{
@@ -340,7 +352,7 @@ int CCommandContext::Run(int argc,char **argv)
 			}
 			else if (_strcmpi(arg, "perline")==0)
 			{
-				perLineMode = true;
+				perLine = val==NULL ? 0 : atoi(val);
 			}
 			else if (_strcmpi(arg, "noposinfo")==0)
 			{
@@ -394,11 +406,15 @@ int CCommandContext::Run(int argc,char **argv)
 			}
 			else if (_strcmpi(arg, "dcoffset")==0)
 			{
-				dc_offset = val==NULL ? 0 : atoi(val);
+				dc_offset = val;
 			}
 			else if (_strcmpi(arg, "cyclefreq")==0)
 			{
-				cycle_freq = val==NULL ? 0 : atoi(val);
+				cycle_freq = val;
+			}
+			else if (_strcmpi(arg, "phaseshift")==0)
+			{
+				phase_shift = true;
 			}
 			else if (_strcmpi(arg, "trs80")==0)
 			{
@@ -436,13 +452,13 @@ int CCommandContext::Run(int argc,char **argv)
 	// Default command is blocks (if a file is specified)
 	if (cmd==NULL && file_count>0)
 	{
-		cmd = ProcessBlocks;
+		cmd = new CCommandBlocks(this);
 	}
 
 	// Run the command
 	if (cmd!=NULL)
 	{
-		int retv = cmd(this);
+		int retv = cmd->Process();
 		CloseFiles();
 		return retv;
 	}
@@ -472,24 +488,24 @@ int CCommandContext::Run(int argc,char **argv)
 
 
 	printf("\nWhat to Output:\n");
-	printf("  --samples[:from]      dump wave samples (optionally starting at sample number <from>)\n");
-	printf("  --cycles              dump wave cycle lengths\n");
-	printf("  --cyclekinds          dump wave cycle kinds (long/short)\n");
-	printf("  --bits                dump raw bit data\n");
-	printf("  --bytes               dump raw byte data\n");
-	printf("  --blocks              dump data blocks (default)\n");
+	printf("  --wavestats[:from]    display various stats about the wave file\n");
+	printf("  --samples[:from]      process wave samples (optionally starting at sample number <from>)\n");
+	printf("  --cycles              process wave cycle lengths\n");
+	printf("  --cyclekinds          process wave cycle kinds (long/short)\n");
+	printf("  --bits                process raw bit data\n");
+	printf("  --bytes               process raw byte data\n");
+	printf("  --blocks              process data blocks (default)\n");
 
 	printf("\nWave Input Options:\n");
 	printf("  --smooth[:N]          smooth waveform with a moving average of N samples (N=3 if not specified)\n");
-	printf("  --analyze             determine cycle length by analysis (don't trust sample rate)\n");
+	printf("  --noanalyze           determine cycle length by analysis (don't trust sample rate)\n");
 	printf("  --allowbadcycles      dont limit check cycle lengths (within reason)\n");
 	printf("  --dcoffset:[N]        offset sample values by this amount\n");
 	printf("  --cyclefreq:[N]       explicitly set the short cycle frequency\n");
-	printf("  --phaseshift          skip the first half-cycle causing a 180deg phase shift\n");
 
 	printf("\nText Output Formatting:\n");
 	printf("  --syncinfo            show details of bit and byte sync operations\n");
-	printf("  --perline             display one piece of data per line\n");
+	printf("  --perline:N           display N piece of data per line (default depends on data kind)\n");
 	printf("  --noposinfo           don't dump position info\n");
 	printf("  --zc                  start a new line at zero crossings with --samples\n");
 	printf("  --samplecount         number of samples to dump with --samples\n");
@@ -501,7 +517,7 @@ int CCommandContext::Run(int argc,char **argv)
 	printf("  --samplesize:N        render using 8 or 16 bit samples (default = 8)\n");
 	printf("  --volume:N            render volume percent (default = 10%)\n");
 	printf("  --baud:N              render baud rate 300 or 1200 (default = 300)\n");
-	printf("  --square              render using square (instead of sine) waves\n");
+	printf("  --sine                render using sine (instead of square) waves\n");
 	printf("\n");
 
 	return 7;

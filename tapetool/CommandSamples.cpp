@@ -3,26 +3,27 @@
 
 #include "precomp.h"
 
-#include "CommandContext.h"
+#include "Context.h"
+#include "CommandSamples.h"
 
 // Command handler for dumping samples
-int ProcessSamples(CCommandContext* c)
+int CCommandSamples::Process()
 {
 	// Open the file
-	if (!c->OpenFiles(resSamples))
+	if (!_ctx->OpenFiles(resSamples))
 		return 7;
 
-	if (!c->file->IsWaveFile())
+	if (!_ctx->file->IsWaveFile())
 	{
 		fprintf(stderr, "Can't dump samples from a text file");
 		return 7;
 	}
 
-	CWaveReader* wf = static_cast<CWaveReader*>(c->file);
+	CWaveReader* wf = static_cast<CWaveReader*>(_ctx->file);
 
-	int perline = c->perLineMode ? 1 : 32;
+	int perline = _ctx->perLine ? _ctx->perLine : 32;
 
-	wf->Seek(c->from);
+	wf->Seek(_ctx->from);
 
 	int prev = 0;
 	bool first = true;
@@ -31,7 +32,7 @@ int ProcessSamples(CCommandContext* c)
 	int index = 0;
 	while (wf->HaveSample())
 	{
-		if (c->showZeroCrossings && !first && prev<0 != wf->CurrentSample()<0)
+		if (_ctx->showZeroCrossings && !first && prev<0 != wf->CurrentSample()<0)
 		{
 			index=0;
 		}
@@ -42,7 +43,7 @@ int ProcessSamples(CCommandContext* c)
 
 		if ((index++ % perline)==0)
 		{
-			if (c->showPositionInfo)
+			if (_ctx->showPositionInfo)
 				printf("\n[@%12i] ", wf->_currentSampleNumber);
 			else
 				printf("\n");
@@ -54,7 +55,7 @@ int ProcessSamples(CCommandContext* c)
 
 		wf->NextSample();
 
-		if (c->samples>0 && wf->_currentSampleNumber >= c->from + c->samples)
+		if (_ctx->samples>0 && wf->_currentSampleNumber >= _ctx->from + _ctx->samples)
 			break;
 	}
 

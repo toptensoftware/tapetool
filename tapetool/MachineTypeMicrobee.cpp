@@ -6,8 +6,9 @@
 #include "MachineTypeMicrobee.h"
 #include "FileReader.h"
 #include "WaveWriter.h"
-#include "CommandContext.h"
+#include "Context.h"
 #include "TapFileReader.h"
+#include "WaveAnalysis.h"
 
 #pragma pack(1)
 struct TAPE_HEADER
@@ -38,7 +39,7 @@ void CMachineTypeMicrobee::SetOutputBaud(int baud)
 	_baud = baud;
 }
 
-CFileReader* CMachineTypeMicrobee::CreateFileReader(CCommandContext* c, const char* pszExt)
+CFileReader* CMachineTypeMicrobee::CreateFileReader(CContext* c, const char* pszExt)
 {
 	if (_stricmp(pszExt, ".tap")==0)
 		return new CTapFileReader(c);
@@ -400,18 +401,11 @@ void CMachineTypeMicrobee::RenderByte(CWaveWriter* writer, unsigned char byte)
 
 
 // Command handler for dumping formatted header block and CRC checked data blocks
-int CMachineTypeMicrobee::ProcessBlocks(CCommandContext* c)
+int CMachineTypeMicrobee::ProcessBlocks(CContext* c)
 {
 	// Open files
 	if (!c->OpenFiles(resBytes))
 		return 7;
-
-	// Analyse cycle lengths
-	if (c->analyzeCycles)
-		c->file->Analyze();
-
-	c->file->Prepare();
-
 
 	printf("\n");
 	c->file->SyncToByte(c->showSyncData);
@@ -617,6 +611,26 @@ int CMachineTypeMicrobee::ProcessBlocks(CCommandContext* c)
 	return 0;
 }
 
+void CMachineTypeMicrobee::PrepareWaveMetrics(CContext* c, CWaveReader* wf)
+{
+	if (c->autoAnalyze)
+	{
+		WAVE_INFO info;
+
+		fprintf(stderr, "\n\nAnalysing wave data...");
+		AnalyseWave(wf, 0, 0, c->phase_shift, info);
+		fprintf(stderr, "\n\n");
+
+		wf->SetCycleLengths(info.medianShortCycleLength, info.medianLongCycleLength);
+	}
+	else
+	{
+		wf->SetShortCycleFrequency(2400);
+	}
+}
+
+
+/*
 int CMachineTypeMicrobee::CycleFrequency()
 {
 	return 2400;
@@ -626,3 +640,4 @@ int CMachineTypeMicrobee::DcOffset(CWaveReader* wave)
 {
 	return 0;
 }
+*/

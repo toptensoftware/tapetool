@@ -3,45 +3,40 @@
 
 #include "precomp.h"
 
-#include "CommandContext.h"
+#include "Context.h"
+#include "CommandCycleKinds.h"
 
 // Command handler for dumping cycle kinds
-int ProcessCycleKinds(CCommandContext* c)
+int CCommandCycleKinds::Process()
 {
 	// Open files
-	if (!c->OpenFiles(resCycleKinds))
+	if (!_ctx->OpenFiles(resCycleKinds))
 		return 7;
 
-	// Analyse cycle lengths
-	if (c->analyzeCycles)
-		c->file->Analyze();
-
-	c->file->Prepare();
-
-	int perline = c->perLineMode ? 1 : 64;
+	int perline = _ctx->perLine ? _ctx->perLine : 64;
 
 	// Dump all cycles
 	int index = 0;
 	while (true)
 	{
-		int pos = c->file->CurrentPosition();
+		int pos = _ctx->file->CurrentPosition();
 
-		char kind = c->file->ReadCycleKind();
+		char kind = _ctx->file->ReadCycleKind();
 		if (kind==0)
 			break;
 
 
 		if ((index++ % perline)==0)
 		{
-			if (c->showPositionInfo)
+			if (_ctx->showPositionInfo)
 				printf("\n[@%12i] ", pos);
 			else
 				printf("\n");
 		}
 
 		printf("%c", kind);
-		if (c->renderFile)
-			c->machine->RenderCycleKind(c->renderFile, kind);
+		if (_ctx->renderFile)
+			_ctx->machine->RenderCycleKind(_ctx->renderFile, kind);
 	}
 
 	printf("\n\n");

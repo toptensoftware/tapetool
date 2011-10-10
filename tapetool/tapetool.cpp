@@ -20,14 +20,14 @@
 #include "TextReader.h"
 #include "WaveWriter.h"
 #include "MachineTypeMicrobee.h"
-#include "CommandContext.h"
+#include "Context.h"
 
 
 
 // Main
 int main(int argc,char **argv)
 {
-	CCommandContext ctx;
+	CContext ctx;
 	return ctx.Run(argc, argv);
 }
 

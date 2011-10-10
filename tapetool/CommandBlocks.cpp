@@ -3,10 +3,12 @@
 
 #include "precomp.h"
 
-#include "CommandContext.h"
+#include "Context.h"
+#include "CommandBlocks.h"
 
-int ProcessBlocks(CCommandContext* c)
+
+int CCommandBlocks::Process()
 {
 	// Blocks are machine dependant so delegate...
-	return c->machine->ProcessBlocks(c);
+	return _ctx->machine->ProcessBlocks(_ctx);
 }

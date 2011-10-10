@@ -6,7 +6,7 @@
 
 #include "MachineType.h"
 
-class CCommandContext;
+class CContext;
 
 class CMachineTypeTrs80 : public CMachineType
 {
@@ -15,6 +15,9 @@ public:
 	virtual ~CMachineTypeTrs80();
 
 	virtual const char* GetTapeFormatName() { return "cas"; };
+
+	virtual void PrepareWaveMetrics(CContext* c, CWaveReader* wf);
+
 	virtual bool SyncToBit(CFileReader* reader, bool verbose);
 	virtual int ReadBit(CFileReader* reader, bool verbose);
 	virtual bool SyncToByte(CFileReader* reader, bool verbose);
@@ -25,14 +28,11 @@ public:
 	virtual void RenderBit(CWaveWriter* writer, unsigned char bit);
 	virtual void RenderByte(CWaveWriter* writer, unsigned char byte);
 
-	virtual int ProcessBlocks(CCommandContext* c);
+	virtual int ProcessBlocks(CContext* c);
 
-	virtual int CycleFrequency();
-	virtual int DcOffset(CWaveReader* wave);
-
-	bool ProcessSystemBlock(CCommandContext* c, bool verbose);
-	bool ProcessSourceBlock(CCommandContext* c, bool verbose);
-	bool ProcessBasicBlock(CCommandContext* c, bool verbose);
+	bool ProcessSystemBlock(CContext* c, bool verbose);
+	bool ProcessSourceBlock(CContext* c, bool verbose);
+	bool ProcessBasicBlock(CContext* c, bool verbose);
 
 	int _syncBytePosition;
 	bool _eof;

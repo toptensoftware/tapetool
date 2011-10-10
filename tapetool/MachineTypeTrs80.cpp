@@ -6,10 +6,143 @@
 #include "MachineTypeTrs80.h"
 #include "FileReader.h"
 #include "WaveWriter.h"
-#include "CommandContext.h"
+#include "Context.h"
+#include "WaveAnalysis.h"
+
+const char* basic_keywords[] = {
+	"END",
+	"FOR",
+	"RESET",
+	"SET",
+	"CLS",
+	"CMD",
+	"RANDOM",
+	"NEXT",
+	"DATA",
+	"INPUT",
+	"DIM",
+	"READ",
+	"LET",
+	"GOTO",
+	"RUN",
+	"IF",
+	"RESTORE",
+	"GOSUB",
+	"RETURN",
+	"REM",
+	"STOP",
+	"ELSE",
+	"TRON",
+	"TROFF",
+	"DEFSTR",
+	"DEFINT",
+	"DEFSNG",
+	"DEFDBL",
+	"LINE",
+	"EDIT",
+	"ERROR",
+	"RESUME",
+	"OUT",
+	"ON",
+	"OPEN",
+	"FIELD",
+	"GET",
+	"PUT",
+	"CLOSE",
+	"LOAD",
+	"MERGE",
+	"NAME",
+	"KILL",
+	"LSET",
+	"RSET",
+	"SAVE",
+	"SYSTEM",
+	"LPRINT",
+	"DEF",
+	"POKE",
+	"PRINT",
+	"CONT",
+	"LIST",
+	"LLIST",
+	"DELETE",
+	"AUTO",
+	"CLEAR",
+	"CLOAD",
+	"CSAVE",
+	"NEW",
+	"TAB",
+	"TO",
+	"FN",
+	"USING",
+	"VARPTR",
+	"USR",
+	"ERL",
+	"ERR",
+	"STRING$",
+	"INSTR",
+	"POINT",
+	"TIME$",
+	"MEM",
+	"INKEY$",
+	"THEN",
+	"NOT",
+	"STEP",
+	"+",
+	"-",
+	"*",
+	"/",
+	"<up>",
+	"AND",
+	"OR",
+	">",
+	"=",
+	"<",
+	"SGN",
+	"INT",
+	"ABS",
+	"FRE",
+	"INP",
+	"POS",
+	"SQR",
+	"RND",
+	"LOG",
+	"EXP",
+	"COS",
+	"SIN",
+	"TAN",
+	"ATN",
+	"PEEK",
+	"CVI",
+	"CVS",
+	"CVD",
+	"EOF",
+	"LOC",
+	"LOF",
+	"MKI$",
+	"MKS$",
+	"MKD$",
+	"CINT",
+	"CSNG",
+	"CDBL",
+	"FIX",
+	"LEN",
+	"STR$",
+	"VAL",
+	"ASC",
+	"CHR$",
+	"LEFT$",
+	"RIGHT$",
+	"MID$",
+	"'",
+	"",
+	"",
+	"",
+	"",
+};
 
 CMachineTypeTrs80::CMachineTypeTrs80()
 {
+	assert(sizeof(basic_keywords)/sizeof(const char*) == 128);
 	_syncBytePosition=-1;
 }
 
@@ -118,7 +251,7 @@ int CMachineTypeTrs80::ReadBit(CFileReader* reader, bool verbose)
 	{
 		savePos = reader->CurrentPosition();
 		kind = reader->ReadCycleKindChecked(verbose);
-		if (kind=='S')
+		if (kind=='S' || kind==0)
 			return 1;
 	}
 
@@ -127,7 +260,11 @@ int CMachineTypeTrs80::ReadBit(CFileReader* reader, bool verbose)
 		if (kind!=0)
 			printf("[bit error, unexpected cycle '%c' at %i]", kind, savePos);
 		else
+		{
+			if (kind=='S')
+				return 1;
 			printf("[bit error, eof at %i]", savePos);
+		}
 	}
 
 	return -1;
@@ -153,7 +290,8 @@ bool CMachineTypeTrs80::SyncToByte(CFileReader* reader, bool verbose)
 	// Look for the leading sync byte 
 	if (_syncBytePosition<0)
 	{
-		printf("scanning for a5 sync byte");
+		if (verbose)
+			printf("[scanning for a5 sync byte...]\n");
 
 		while (true)
 		{
@@ -212,7 +350,7 @@ int CMachineTypeTrs80::ReadByte(CFileReader* reader, bool verbose)
 		int bit = ReadBit(reader, verbose);
 		if (bit < 0)
 		{
-			if (verbose)
+			if (verbose && i>0)
 				printf("[Corrupted data at %i, error reading bit]", pos);
 			return -1;
 		}
@@ -285,17 +423,11 @@ enum FileType
 };
 
 // Command handler for dumping formatted header block and CRC checked data blocks
-int CMachineTypeTrs80::ProcessBlocks(CCommandContext* c)
+int CMachineTypeTrs80::ProcessBlocks(CContext* c)
 {
 	// Open files
 	if (!c->OpenFiles(resBytes))
 		return 7;
-
-	// Analyse cycle lengths
-	if (c->analyzeCycles)
-		c->file->Analyze();
-
-	c->file->Prepare();
 
 
 	printf("\n");
@@ -401,7 +533,7 @@ int CMachineTypeTrs80::ProcessBlocks(CCommandContext* c)
 	if (fileType==ftBasic)
 	{
 		printf("    file type: BASIC\n");
-		printf("    file name: %c", header[3]);
+		printf("    file name: %c\n", header[3]);
 	}
 	else
 	{
@@ -494,7 +626,7 @@ int CMachineTypeTrs80::ProcessBlocks(CCommandContext* c)
 	return 0;
 }
 
-bool CMachineTypeTrs80::ProcessSystemBlock(CCommandContext* c, bool verbose)
+bool CMachineTypeTrs80::ProcessSystemBlock(CContext* c, bool verbose)
 {
 /*
 SYSTEM TAPE FORMAT
@@ -609,48 +741,9 @@ lsb,msb                 entry point address
 	}
 }
 
-bool CMachineTypeTrs80::ProcessSourceBlock(CCommandContext* c, bool verbose)
+bool CMachineTypeTrs80::ProcessSourceBlock(CContext* c, bool verbose)
 {
-	printf("[SOURCE file block processing not implemented]");
-	return false;
-}
-
-bool CMachineTypeTrs80::ProcessBasicBlock(CCommandContext* c, bool verbose)
-{
-	printf("[BASIC file block processing not implemented]");
-	return false;
-}
-
-int CMachineTypeTrs80::CycleFrequency()
-{
-	return 1024;
-}
-
-int CMachineTypeTrs80::DcOffset(CWaveReader* wave)
-{
-	return wave->GetBytesPerSample()==2 ? -8192 : -64;
-}
-
-
 /*
-SYSTEM TAPE FORMAT
-TAPE LEADER             256 zeroes followed by a A5 (sync byte)
-55                      header byte indicating system format
-xx xx xx xx xx xx       6 character file name in ASCII
-
-        3C              data header
-        xx              length of data 01-FFH, 00=256 bytes
-        lsb,msb         load address
-        xx ... xx       data (your program)
-        xx              checksum of your data & load address
-
-        .               repeat from 3C through checksum
-        .
-        .
-78                      end of file marker
-lsb,msb                 entry point address
-						
-
 EDITOR/ASSEMBLER SOURCE TAPE FORMAT
 TAPE LEADER             256 zeroes followed by a A5 (sync byte)
 D3                      header byte indicating source format
@@ -666,8 +759,69 @@ xx xx xx xx xx xx       6 character file name in ASCII
         .
 
 1A                      end of file marker
-						
+*/
+	char basicLine[1024];
+	char* bpos = basicLine;
+	while (true)
+	{
+		int byte = c->file->ReadByte(verbose);
+		if (byte<0)
+		{
+			if (verbose)
+				printf("\nFailed to read byte\n\n");
+			return false;
+		}
+		_blockData[_blockDataLen++] = byte;
 
+		if (_blockDataLen==1 && byte==0x1A)
+		{
+			printf("[Eof Terminator]\n");
+			_eof = true;
+			return true;
+		}
+
+		if (_blockDataLen<=5)
+		{
+			if ((byte & 0x80)==0)
+			{
+				printf("\nError in file format, expected a line number with bit 7 set, found 0x%.2x\n", byte);
+				return false;
+			}
+			byte &= ~0x80;
+			if (byte<'0' || byte>'9')
+			{
+				printf("\nError in file format, expected a line number digit, found 0x%.2x\n", byte|0x80);
+				return false;
+			}
+			*bpos++ = byte;
+			continue;
+		}	
+		if (_blockDataLen==6)
+		{
+			if (byte!=0x20)
+			{
+				printf("\nError in file format, expected line marker leading space, found 0x%.2x\n", byte);
+				return false;
+			}
+			*bpos++ = byte;
+			continue;
+		}
+
+		if (byte==0x0d)
+		{
+			// End of line
+			*bpos = 0;
+			printf("// %s\n", basicLine);
+			return true;
+		}
+
+		*bpos++ = byte;
+	}
+}
+
+bool CMachineTypeTrs80::ProcessBasicBlock(CContext* c, bool verbose)
+{
+/*
 BASIC TAPE FORMAT
 LEADER                  256 zeroes followed by an A5 (sync byte)
 D3 D3 D3                BASIC header bytes
@@ -683,5 +837,146 @@ xx                      1 character file name in ASCII
         .
 
 00 00                   end of file markers
-						
+*/
+
+	char basicLine[1024];
+	char* bpos = basicLine;
+	unsigned int nextLine = 0;
+	unsigned int lineNumber = 0;
+	while (true)
+	{
+		int byte = c->file->ReadByte(verbose);
+		if (byte<0)
+		{
+			if (verbose)
+				printf("\nFailed to read byte\n\n");
+			return false;
+		}
+		_blockData[_blockDataLen++] = byte;
+
+		if (_blockDataLen==1)
+		{
+			nextLine = byte;
+			continue;
+		}
+		if (_blockDataLen==2)
+		{
+			nextLine |= byte << 8;
+			if (nextLine==0)
+			{
+				_eof = true;
+				printf("[Eof Terminator]\n");
+				return true;
+			}
+			continue;
+		}
+		if (_blockDataLen==3)
+		{
+			lineNumber = byte;
+			continue;
+		}
+		if (_blockDataLen==4)
+		{
+			lineNumber |= byte << 8;
+			continue;
+		}
+
+		if (byte==0)
+		{
+			*bpos = 0;
+			printf("[0x%.4x] // %5i %s\n", nextLine, lineNumber, basicLine);
+			return true;
+		}
+
+		if (byte & 0x80)
+		{
+			strcpy(bpos, basic_keywords[byte-0x80]);
+			bpos += strlen(bpos);
+		}
+		else
+		{
+			*bpos++ = byte;
+		}
+	}
+}
+
+void CMachineTypeTrs80::PrepareWaveMetrics(CContext* c, CWaveReader* wf)
+{
+	if (c->autoAnalyze)
+	{
+		WAVE_INFO info;
+
+		fprintf(stderr, "\n\nAnalysing wave data...");	
+		
+		AnalyseWave(wf, 0, 0, c->phase_shift, info);
+		fprintf(stderr, "\n\n");
+
+		int offsetForPulse;
+		if (abs(info.medianMinAmplitude) > abs(info.medianMaxAmplitude))
+		{
+			offsetForPulse = info.medianMinAmplitude * 3 / 4;
+		}
+		else
+		{
+			offsetForPulse = info.medianMaxAmplitude * 3 / 4;
+		}
+
+		//printf("[using pulse threshold of %i]\n", offsetForPulse);
+		wf->SetDCOffset(-offsetForPulse);
+		wf->SetCycleLengths(info.medianShortCycleLength, info.medianLongCycleLength);
+
+	}
+	else
+	{
+		wf->SetShortCycleFrequency(1024);
+		if (wf->GetDCOffset()==0)
+		{
+			printf("[WARNING: no DC offset set, pulse detection won't work]\n");
+		}
+	}
+}
+
+/*
+int CMachineTypeTrs80::CycleFrequency()
+{
+	return 1024;
+}
+
+int CMachineTypeTrs80::DcOffset(CWaveReader* wave)
+{
+	fprintf(stderr, "\n\nAnalysing wave to determine pulse threshold...");
+	WAVE_INFO info;
+	AnalyseWave(wave, 0, 0, info);
+
+	fprintf(stderr, "\n\n");
+
+	int offsetForPulse;
+	if (abs(info.medianMinAmplitude) > abs(info.medianMaxAmplitude))
+	{
+		offsetForPulse = info.medianMinAmplitude * 3 / 4;
+	}
+	else
+	{
+		offsetForPulse = info.medianMaxAmplitude * 3 / 4;
+	}
+
+	printf("[wave analysis reported median amplitude range of %i to %i, using pulse threshold of %i]\n", info.medianMinAmplitude, info.medianMaxAmplitude, offsetForPulse);
+	return -offsetForPulse;
+}
+*/
+
+
+
+/*
+	int offsetForPulse;
+	if (abs(info.medianMinAmplitude) > abs(info.medianMaxAmplitude))
+	{
+		offsetForPulse = -info.medianMinAmplitude * 3 / 4;
+	}
+	else
+	{
+		offsetForPulse = -info.medianMaxAmplitude * 3 / 4;
+	}
+	
+	printf("    DC Offset For Pulses:  %i\n", offsetForPulse);
 */

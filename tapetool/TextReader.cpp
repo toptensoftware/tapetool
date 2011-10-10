@@ -5,7 +5,7 @@
 
 #include "TextReader.h"
 
-CTextReader::CTextReader(CCommandContext* ctx) : CFileReader(ctx)
+CTextReader::CTextReader(CContext* ctx) : CFileReader(ctx)
 {
 	_res = resBytes;
 	_dataFormat[0]='\0';
@@ -42,6 +42,8 @@ enum parseState
 	psLeadingZero,
 	psHexHi,
 	psHexLo,
+	psSlash,
+	psLineComment,
 };
 
 bool CTextReader::Open(const char* filename, Resolution res)
@@ -76,6 +78,10 @@ bool CTextReader::Open(const char* filename, Resolution res)
 					case '[':
 						state = psComment;
 						bufPos=0;
+						break;
+
+					case '/':
+						state = psSlash;
 						break;
 
 					case '0':
@@ -127,6 +133,24 @@ bool CTextReader::Open(const char* filename, Resolution res)
 					}
 				}
 
+				break;
+
+			case psSlash:
+				if (ch=='/')
+					state = psComment;
+				else
+				{
+					fprintf(stderr, "Error parsing input text file, unexpected character '%c' at %i\n", (char)ch, pos);
+					fclose(file);
+					return false;
+				}
+				break;
+
+			case psLineComment:
+				if (ch=='\r' || ch=='\n')
+				{
+					state = psReady;
+				}
 				break;
 
 			case psLeadingZero:
@@ -327,16 +351,6 @@ char CTextReader::ReadCycleKind()
 		return 0;
 
 	return ((char*)_buffer)[_currentPosition++];
-}
-
-void CTextReader::Analyze()
-{
-	// Ignore
-}
-
-void CTextReader::Prepare()
-{
-	// Ignore
 }
 
 void CTextReader::Seek(int position)

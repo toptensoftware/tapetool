@@ -12,7 +12,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BinaryReader.cpp" />
-    <ClCompile Include="CommandContext.cpp" />
+    <ClCompile Include="Command.cpp" />
+    <ClCompile Include="Context.cpp" />
     <ClCompile Include="FileReader.cpp" />
     <ClCompile Include="MachineType.cpp" />
     <ClCompile Include="MachineTypeGeneric.cpp" />
@@ -22,15 +23,17 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="ProcessBits.cpp" />
-    <ClCompile Include="ProcessBlocks.cpp" />
-    <ClCompile Include="ProcessBytes.cpp" />
-    <ClCompile Include="ProcessCycleKinds.cpp" />
-    <ClCompile Include="ProcessCycles.cpp" />
-    <ClCompile Include="ProcessSamples.cpp" />
+    <ClCompile Include="CommandWaveStats.cpp" />
+    <ClCompile Include="CommandBits.cpp" />
+    <ClCompile Include="CommandBlocks.cpp" />
+    <ClCompile Include="CommandBytes.cpp" />
+    <ClCompile Include="CommandCycleKinds.cpp" />
+    <ClCompile Include="CommandCycles.cpp" />
+    <ClCompile Include="CommandSamples.cpp" />
     <ClCompile Include="tapetool.cpp" />
     <ClCompile Include="TapFileReader.cpp" />
     <ClCompile Include="TextReader.cpp" />
+    <ClCompile Include="WaveAnalysis.cpp" />
     <ClCompile Include="WaveReader.cpp" />
     <ClCompile Include="WaveWriter.cpp" />
   </ItemGroup>
@@ -39,7 +42,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BinaryReader.h" />
-    <ClInclude Include="CommandContext.h" />
+    <ClInclude Include="Command.h" />
+    <ClInclude Include="CommandBits.h" />
+    <ClInclude Include="CommandBlocks.h" />
+    <ClInclude Include="CommandBytes.h" />
+    <ClInclude Include="Context.h" />
+    <ClInclude Include="CommandCycleKinds.h" />
+    <ClInclude Include="CommandCycles.h" />
+    <ClInclude Include="CommandSamples.h" />
+    <ClInclude Include="CommandWaveStats.h" />
     <ClInclude Include="FileReader.h" />
     <ClInclude Include="MachineType.h" />
     <ClInclude Include="MachineTypeGeneric.h" />
@@ -48,6 +59,7 @@
     <ClInclude Include="precomp.h" />
     <ClInclude Include="TapFileReader.h" />
     <ClInclude Include="TextReader.h" />
+    <ClInclude Include="WaveAnalysis.h" />
     <ClInclude Include="WaveReader.h" />
     <ClInclude Include="WaveWriter.h" />
   </ItemGroup>

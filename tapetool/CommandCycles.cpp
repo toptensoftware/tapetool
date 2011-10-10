@@ -3,16 +3,17 @@
 
 #include "precomp.h"
 
-#include "CommandContext.h"
+#include "Context.h"
+#include "CommandCycles.h"
 
 // Command handler for dumping cycle lengths
-int ProcessCycles(CCommandContext* c)
+int CCommandCycles::Process()
 {
 	// Open the file
-	if (!c->OpenFiles(resCycles))
+	if (!_ctx->OpenFiles(resCycles))
 		return 7;
 
-	int perline = c->perLineMode ? 1 : 16;
+	int perline = _ctx->perLine ? _ctx->perLine : 16;
 
 	// Dump all cycles
 	int index = 0;
@@ -20,13 +21,13 @@ int ProcessCycles(CCommandContext* c)
 	{
 		if ((index++ % perline)==0)
 		{
-			if (c->showPositionInfo)
-				printf("\n[@%12i] ", c->file->CurrentPosition());
+			if (_ctx->showPositionInfo)
+				printf("\n[@%12i] ", _ctx->file->CurrentPosition());
 			else
 				printf("\n");
 		}
 
-		int cyclelen= c->file->ReadCycleLen();
+		int cyclelen= _ctx->file->ReadCycleLen();
 		if (cyclelen<0)
 			break;
 

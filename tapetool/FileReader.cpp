@@ -5,12 +5,12 @@
 
 #include "FileReader.h"
 #include "MachineType.h"
-#include "CommandContext.h"
+#include "Context.h"
 
 //////////////////////////////////////////////////////////////////////////
 // CFileReader
 
-CFileReader::CFileReader(CCommandContext* ctx)
+CFileReader::CFileReader(CContext* ctx)
 {
 	_ctx = ctx;
 }

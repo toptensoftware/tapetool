@@ -10,7 +10,7 @@
 class CTapFileReader : public CBinaryReader
 {
 public:
-			CTapFileReader(CCommandContext* c);
+			CTapFileReader(CContext* c);
 	virtual ~CTapFileReader();
 
 	virtual bool Open(const char* filename, Resolution res);

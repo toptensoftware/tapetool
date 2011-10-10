@@ -6,7 +6,7 @@
 
 #include "MachineType.h"
 
-class CCommandContext;
+class CContext;
 
 class CMachineTypeMicrobee : public CMachineType
 {
@@ -17,8 +17,10 @@ public:
 	void SetOutputBaud(int baud);
 
 	virtual const char* GetTapeFormatName() { return "tap"; };
-	virtual CFileReader* CreateFileReader(CCommandContext* ctx, const char* pszExt);
+	virtual CFileReader* CreateFileReader(CContext* ctx, const char* pszExt);
 
+	virtual void PrepareWaveMetrics(CContext* c, CWaveReader* wf);
+	
 	virtual bool SyncToBit(CFileReader* reader, bool verbose);
 	virtual int ReadBit(CFileReader* reader, bool verbose);
 	virtual bool SyncToByte(CFileReader* reader, bool verbose);
@@ -28,10 +30,7 @@ public:
 	virtual void RenderBit(CWaveWriter* writer, unsigned char bit);
 	virtual void RenderByte(CWaveWriter* writer, unsigned char byte);
 
-	virtual int ProcessBlocks(CCommandContext* c);
-
-	virtual int CycleFrequency();
-	virtual int DcOffset(CWaveReader* wave);
+	virtual int ProcessBlocks(CContext* c);
 
 	virtual bool CanRenderSquare() { return true; }
 

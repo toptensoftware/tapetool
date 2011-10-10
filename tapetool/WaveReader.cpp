@@ -5,18 +5,21 @@
 
 #include "WaveReader.h"
 #include "MachineType.h"
-#include "CommandContext.h"
+#include "Context.h"
 
 //////////////////////////////////////////////////////////////////////////
 // CWaveReader
 
 // Constructor
-CWaveReader::CWaveReader(CCommandContext* ctx) : CFileReader(ctx)
+CWaveReader::CWaveReader(CContext* ctx) : CFileReader(ctx)
 {
 	_file = NULL;
 	_smoothingPeriod = 0;
 	_smoothingBuffer = NULL;
 	_dc_offset = 0;
+	_avgCycleLength=0;
+	_shortCycleLength=0;
+	_longCycleLength=0;
 	Close();
 }
 
@@ -31,6 +34,17 @@ int CWaveReader::GetBytesPerSample()
 {
 	return _bytesPerSample;
 }
+
+int CWaveReader::GetSampleRate()
+{
+	return _sampleRate;
+}
+
+int CWaveReader::GetTotalSamples()
+{
+	return _waveEndInSamples;
+}
+
 
 const char* CWaveReader::GetDataFormat()
 {
@@ -181,27 +195,11 @@ bool CWaveReader::Open(const char* filename, Resolution res)
 				memset(_smoothingBuffer, 0, sizeof(int) * _smoothingPeriod);
 				_smoothingBufferPos=0;
 				_smoothingBufferTotal=0;
-
-				printf("[using a smoothing period of %i]\n", _smoothingPeriod);
-			}
-
-			// Setup DC Offset
-			_dc_offset = _ctx->dc_offset ? _ctx->dc_offset : _ctx->machine->DcOffset(this);
-
-			// Work out cycle frequency
-			int freq = _ctx->cycle_freq ? _ctx->cycle_freq : _ctx->machine->CycleFrequency();
-			_shortCycleLength = _sampleRate / freq;
-			_longCycleLength = 2 * _shortCycleLength;
-			_avgCycleLength = (_shortCycleLength + _longCycleLength)/2;
-
-			// Setup phase shift
-			if (_ctx->phaseShift)
-			{
-				ReadHalfCycle();
 			}
 
 			// Seek to start
 			Seek(0);
+
 			return true;
 		}
 	}
@@ -212,6 +210,65 @@ bool CWaveReader::Open(const char* filename, Resolution res)
 	fprintf(stderr,"No \"data\" chunk found.\n");
 
 	return false;
+}
+
+
+void CWaveReader::Prepare()
+{
+	// Apply initial phase shift
+	if (_ctx->phase_shift)
+	{
+		ReadHalfCycle();
+	}
+
+	// Do analysis or whatever...
+	_ctx->machine->PrepareWaveMetrics(_ctx, this);
+
+	// Apply user overrides
+	if (_ctx->dc_offset!=NULL)
+		SetDCOffset(atoi(_ctx->dc_offset));
+	if (_ctx->cycle_freq!=NULL)
+		SetShortCycleFrequency(atoi(_ctx->cycle_freq));
+
+	// Show info on how wave is handled
+	printf("\n[\n");
+	printf("    smoothing period:        %i\n", _smoothingPeriod);
+	printf("    DC offset:               %i\n", _dc_offset);
+	printf("    phase shifed:            %s\n", _ctx->phase_shift ? "yes" : "no");
+	if (_avgCycleLength!=0)
+	{
+		printf("    avg cycle length:        %i (%.1fHz)\n", _avgCycleLength, (double)_sampleRate / _avgCycleLength);
+		printf("    short cycle length:      %i (%.1fHz)\n", _shortCycleLength, (double)_sampleRate / _shortCycleLength);
+		printf("    long cycle length:       %i (%.1fHz)\n", _longCycleLength, (double)_sampleRate / _longCycleLength);
+		printf("    cycle length allowance:  %i (+/-)\n", _cycleLengthAllowance);
+	}
+	printf("]\n\n");
+}
+
+void CWaveReader::SetDCOffset(int offset)
+{
+	_dc_offset = offset;
+}
+
+int CWaveReader::GetDCOffset()
+{
+	return _dc_offset;
+}
+
+void CWaveReader::SetShortCycleFrequency(int freq)
+{
+	_shortCycleLength = _sampleRate / freq;
+	_longCycleLength = 2 * _shortCycleLength;
+	_avgCycleLength = (_shortCycleLength + _longCycleLength)/2;
+	_cycleLengthAllowance = _avgCycleLength / 3-1;
+}
+
+void CWaveReader::SetCycleLengths(int shortCycleSamples, int longCycleSamples)
+{
+	_shortCycleLength = shortCycleSamples;
+	_longCycleLength = longCycleSamples;
+	_avgCycleLength = (_shortCycleLength + _longCycleLength)/2;
+	_cycleLengthAllowance = _avgCycleLength / 3-1;
 }
 
 void CWaveReader::Close()
@@ -403,6 +460,7 @@ int CWaveReader::LastCycleLen()
 	return _lastCycleLen;
 }
 
+/*
 void CWaveReader::Analyze()
 {
 	fprintf(stderr, "Analyzing file...\n");
@@ -446,7 +504,9 @@ void CWaveReader::Analyze()
 
 	Seek(savePos);
 }
+*/
 
+/*
 void CWaveReader::Prepare()
 {
 	_cycleLengthAllowance = _avgCycleLength / 3-1;
@@ -454,4 +514,5 @@ void CWaveReader::Prepare()
 	printf("[Short cycle length: %i +/- %i]\n", _shortCycleLength, _cycleLengthAllowance);
 	printf("[Long cycle length: %i +/- %i]\n", _longCycleLength, _cycleLengthAllowance);
 }
+*/
 

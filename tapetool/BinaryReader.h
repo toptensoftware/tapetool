@@ -10,7 +10,7 @@
 class CBinaryReader : public CFileReader
 {
 public:
-			CBinaryReader(CCommandContext* c);
+			CBinaryReader(CContext* c);
 	virtual ~CBinaryReader();
 
 	virtual bool Open(const char* filename, Resolution res);
@@ -21,8 +21,6 @@ public:
 	virtual int CurrentPosition();
 	virtual int ReadCycleLen();
 	virtual char ReadCycleKind();
-	virtual void Analyze();
-	virtual void Prepare();
 	virtual void Seek(int position);
 	virtual char* FormatDuration(int duration);
 	virtual int LastCycleLen();
