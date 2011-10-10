@@ -28,6 +28,16 @@ TapeTool can:
 
 Currently TapeTool only works with 300 baud input files, but it can generate 1200 baud wave files.
 
+## Download
+
+Source code:
+
+* <http://github.com/toptensoftware/tapetool>
+
+Windows executable:
+
+* <https://github.com/toptensoftware/tapetool/blob/master/Release/tapetool.exe?raw=true>
+
 ## Usage
 
 Usage: 
