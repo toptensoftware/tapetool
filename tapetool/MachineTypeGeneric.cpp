@@ -24,7 +24,7 @@ bool CMachineTypeGeneric::OnPreProcess(CContext* c, Resolution resProcess)
 		fprintf(stderr, "You must specify a machine type when working with audio or bit resolution data\n");
 		return false;
 	}
-	if (c->renderFile!=NULL)
+	if (c->renderFile!=NULL && c->cmd->DoesTranslateToWaveData())
 	{
 		fprintf(stderr, "You must specify a machine type when rendering audio tape data\n");
 		return false;

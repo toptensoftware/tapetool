@@ -8,10 +8,10 @@
 #include "WaveReader.h"
 #include "MachineType.h"
 #include "WaveWriter.h"
+#include "CycleDetector.h"
 
 class CCommand;
 class CContext;
-
 
 class CContext
 {
@@ -41,11 +41,13 @@ public:
 	bool renderSine;
 	char* dc_offset;
 	char* cycle_freq;
-	bool phase_shift;
+	double amplify;
+	bool norm_cycles;
 	CMachineType* machine;
 	int byteWrapIndex;
 	const char* outputExtension;
 	const char* inputFormat;
+	CycleMode cycleMode;
 
 	CCommand* cmd;
 

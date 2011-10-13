@@ -101,6 +101,12 @@ lengths etc...
 
 The output of this processing kind can't be re-read by tapetool
 
+### --filter[:from]
+
+Renders a new wave file from an input wave file, applying the --smooth, --dcoffset and --amplify manipulations
+
+This can be used to apply multiple smoothing passes for example.
+
 ### --samples[:from]
 
 Dumps the raw samples of a wave file (can't be used with text input data).  If `from` is specified
@@ -157,15 +163,32 @@ cycles to determine the bit.
 Apply an offset to all samples.  Use with pulse based audio (eg:TRS80) to shift the pulses into the zero
 crossing range.  Also useful for shifting noisy silence/hiss out of the zero crossing range.
 
+### --amplify 
+
+Amplify the input audio signal by the specified percentage.  eg: `--amplify:50` will halve the volume of the 
+input signal.
+
+Note however that amplification rarely has any effect on the ability to decode digital data from a recording.
+
 ### --cyclefreq
 
 Explicitly set the short cycle frequency in Hz.  (Default for Microbee is 2400Hz, TRS80 is 1024Hz)
 
-### --phaseshift
+## --cyclemode
 
-Skips one audio cycle at the start of the file, cause the phase of each cycle to be inverted.  Generally this
-is not a particularly useful setting however it can help in some circumstances where tapetool sees out of phase
-wave cycles that appear as a combination of the long and short frequencies.
+Set the cycle detection mode.  By default tapetool uses a rising zero crossing to detect cycle boundaries. For
+badly distorted signals however, sometimes a different approach can work more effectively.  The available modes
+are:
+	
+	* `zc+` = zero crossing upwards
+	* `zc-` = zero crossing downwards
+	* `max` = local maximum
+	* `min` = local minimum
+	* `max+` = local maximum with positive sample value
+	* `max-` = local minimum with negative sample value
+
+Note that the local maximum/minimum options will nearly always require heavy, possibly multiple pass smoothing 
+to work effectively.  Use the --filter command to apply multiple smoothing passes.
 
 ### --samplecount:N
 

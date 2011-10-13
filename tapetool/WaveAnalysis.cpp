@@ -33,7 +33,7 @@ int compareInts(const void* va, const void* vb)
 	return *(int*)va - *(int*)vb;
 }
 
-void AnalyseWave(CWaveReader* wf, int from, int samples, bool phase_shift,  WAVE_INFO& info)
+void AnalyseWave(CWaveReader* wf, int from, int samples, WAVE_INFO& info)
 {
 	memset(&info, 0, sizeof(info));
 
@@ -52,28 +52,28 @@ void AnalyseWave(CWaveReader* wf, int from, int samples, bool phase_shift,  WAVE
 
 	info.maxAmplitude = 0;
 	info.minAmplitude = 0;
-	info.zeroCrossings = 0;
 	info.sampleRate = wf->GetSampleRate();
+	info.totalCycles = 0;
 
 	int samplesLeftInBlock = wf->GetSampleRate();
 	BLOCK_DATA* currBlock = blocks;
 
 	wf->Seek(from);
-	if (phase_shift)
-		wf->ReadHalfCycle();
 
 	int startPos = wf->CurrentPosition();
 
 	int to = samples > 0 ? startPos + samples : 0;
+
+	CCycleDetector cd(wf->GetCycleMode());
 
 	// Process all samples
 	int index = 0;
 	while (wf->HaveSample())
 	{
 		int sample = wf->CurrentSample();
-		if (!first && prev<0 != sample<0)
+		if (cd.IsNewCycle(sample))
 		{
-			info.zeroCrossings++;
+			info.totalCycles++;
 		}
 
 
@@ -103,7 +103,6 @@ void AnalyseWave(CWaveReader* wf, int from, int samples, bool phase_shift,  WAVE
 	}
 
 	info.totalSamples = wf->CurrentPosition() - startPos;
-	info.totalCycles = info.zeroCrossings / 2;
 
 	// Work out median amplitudes
 	qsort(blocks, numBlocks, sizeof(BLOCK_DATA), compareMinAmplitude);
@@ -129,26 +128,17 @@ void AnalyseWave(CWaveReader* wf, int from, int samples, bool phase_shift,  WAVE
 		first = true;
 		wf->Seek(startPos);
 		int cyclePos = wf->CurrentPosition();
-		int cycleHalfPos = 0;
-		double totalHalfCycleRatios=0;
+		cd.Reset();
 		while (wf->HaveSample())
 		{
 			int sample = wf->CurrentSample();
-			if (!first && prev<0 != sample<0)
+			if (cd.IsNewCycle(sample))
 			{
 				crossingCount++;
-				if ((crossingCount % 2)==0)
-				{
-					int cycleLen = wf->CurrentPosition() - cyclePos;
-					double crossingRatio = 	((double)cycleHalfPos) / cycleLen;
-					totalHalfCycleRatios += crossingRatio;
-					cycleList[cycleCount++] = cycleLen;
-					cyclePos = wf->CurrentPosition();
-				}
-				else
-				{
-					cycleHalfPos = wf->CurrentPosition() - cyclePos;
-				}
+
+				int cycleLen = wf->CurrentPosition() - cyclePos;
+				cycleList[cycleCount++] = cycleLen;
+				cyclePos = wf->CurrentPosition();
 			}
 
 			prev = sample;
@@ -169,8 +159,6 @@ void AnalyseWave(CWaveReader* wf, int from, int samples, bool phase_shift,  WAVE
 			info.medianLongCycleLength = cycleList[cycleCount * 5/6];
 			info.medianLongCycleFrequency = (double)wf->GetSampleRate() / info.medianLongCycleLength;
 		}
-
-		info.avgCrossingRatio = (double)totalHalfCycleRatios / info.totalCycles;
 
 		free(cycleList);
 	}

@@ -11,7 +11,7 @@
 // CWaveReader
 
 // Constructor
-CWaveReader::CWaveReader(CContext* ctx) : CFileReader(ctx)
+CWaveReader::CWaveReader(CContext* ctx) : CFileReader(ctx), _cd(cmZeroCrossingUp)
 {
 	_file = NULL;
 	_smoothingPeriod = 0;
@@ -212,14 +212,10 @@ bool CWaveReader::Open(const char* filename, Resolution res)
 	return false;
 }
 
-
 void CWaveReader::Prepare()
 {
-	// Apply initial phase shift
-	if (_ctx->phase_shift)
-	{
-		ReadHalfCycle();
-	}
+	SetCycleMode(_ctx->cycleMode);
+	SetAmplify(_ctx->amplify);
 
 	// Do analysis or whatever...
 	_ctx->machine->PrepareWaveMetrics(_ctx, this);
@@ -234,7 +230,8 @@ void CWaveReader::Prepare()
 	printf("\n[\n");
 	printf("    smoothing period:        %i\n", _smoothingPeriod);
 	printf("    DC offset:               %i\n", _dc_offset);
-	printf("    phase shifed:            %s\n", _ctx->phase_shift ? "yes" : "no");
+	printf("    amplify:                 %.1f%%\n", _amplify*100);
+	printf("    cycle mode:              %s\n", CCycleDetector::ToString(_cd.GetMode()));
 	if (_avgCycleLength!=0)
 	{
 		printf("    avg cycle length:        %i (%.1fHz)\n", _avgCycleLength, (double)_sampleRate / _avgCycleLength);
@@ -254,6 +251,28 @@ int CWaveReader::GetDCOffset()
 {
 	return _dc_offset;
 }
+
+
+void CWaveReader::SetAmplify(double amp)
+{
+	_amplify = amp;
+}
+
+double CWaveReader::GetAmplify()
+{
+	return _amplify;
+}
+
+void CWaveReader::SetCycleMode(CycleMode mode)
+{
+	_cd.Reset(mode);
+}
+
+CycleMode CWaveReader::GetCycleMode()
+{
+	return _cd.GetMode();
+}
+
 
 void CWaveReader::SetShortCycleFrequency(int freq)
 {
@@ -302,7 +321,7 @@ char* CWaveReader::FormatDuration(int duration)
 void CWaveReader::Seek(int sampleNumber)
 {
 	// Go back by size of smoothing buffer
-	int startAtSampleNumber = sampleNumber -_smoothingPeriod;
+	int startAtSampleNumber = sampleNumber - (_smoothingPeriod+1);
 	if (startAtSampleNumber<0)
 		startAtSampleNumber = 0;
 
@@ -358,7 +377,7 @@ int CWaveReader::ReadRawSample()
 			return EOF_SAMPLE;
 		else
 		{
-			return _dc_offset + i-128;
+			return (short)(_amplify * (_dc_offset + i-128));
 		}
 	}
 	else
@@ -368,7 +387,7 @@ int CWaveReader::ReadRawSample()
 			return EOF_SAMPLE;
 		else
 		{
-			return _dc_offset + s;
+			return (short)(_amplify * (_dc_offset + s));
 		}
 	}
 }
@@ -398,13 +417,12 @@ int CWaveReader::ReadSmoothedSample()
 	return _smoothingBufferTotal / _smoothingPeriod;
 }
 
-int CWaveReader::ReadHalfCycle()
+// Read one cycle from the file and return its length in samples
+int CWaveReader::ReadCycleLen()
 {
-	int prev = _currentSample;
-
 	while (NextSample())
 	{
-		if ((_currentSample<0)!=(prev<0))
+		if (_cd.IsNewCycle(_currentSample))
 		{
 			int iCycleLen = _currentSampleNumber - _startOfCurrentHalfCycle;
 			_startOfCurrentHalfCycle = _currentSampleNumber;
@@ -413,16 +431,6 @@ int CWaveReader::ReadHalfCycle()
 	}
 
 	return -1;
-}
-
-// Read one cycle from the file and return its length in samples
-int CWaveReader::ReadCycleLen()
-{
-	int a = ReadHalfCycle();
-	int b = ReadHalfCycle();
-	if (a==-1 || b==-1)
-		return -1;
-	return a+b;
 }
 
 char CWaveReader::ReadCycleKind()

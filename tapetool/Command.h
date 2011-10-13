@@ -14,7 +14,8 @@ public:
 
 	virtual int Process()=0;
 	virtual bool DoesTranslateFromWaveData() { return true; }
-
+	virtual bool DoesTranslateToWaveData() { return true; }
+	virtual bool UsesAutoOutputFile() { return true; }
 	CContext* _ctx;
 };
 

@@ -13,7 +13,9 @@
   <ItemGroup>
     <ClCompile Include="BinaryReader.cpp" />
     <ClCompile Include="Command.cpp" />
+    <ClCompile Include="CommandFilter.cpp" />
     <ClCompile Include="Context.cpp" />
+    <ClCompile Include="CycleDetector.cpp" />
     <ClCompile Include="FileReader.cpp" />
     <ClCompile Include="MachineType.cpp" />
     <ClCompile Include="MachineTypeGeneric.cpp" />
@@ -46,11 +48,13 @@
     <ClInclude Include="CommandBits.h" />
     <ClInclude Include="CommandBlocks.h" />
     <ClInclude Include="CommandBytes.h" />
+    <ClInclude Include="CommandFilter.h" />
     <ClInclude Include="Context.h" />
     <ClInclude Include="CommandCycleKinds.h" />
     <ClInclude Include="CommandCycles.h" />
     <ClInclude Include="CommandSamples.h" />
     <ClInclude Include="CommandWaveStats.h" />
+    <ClInclude Include="CycleDetector.h" />
     <ClInclude Include="FileReader.h" />
     <ClInclude Include="MachineType.h" />
     <ClInclude Include="MachineTypeGeneric.h" />

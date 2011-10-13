@@ -908,7 +908,7 @@ void CMachineTypeTrs80::PrepareWaveMetrics(CContext* c, CWaveReader* wf)
 
 		fprintf(stderr, "\n\nAnalysing wave data...");	
 		
-		AnalyseWave(wf, 0, 0, c->phase_shift, info);
+		AnalyseWave(wf, 0, 0, info);
 		fprintf(stderr, "\n\n");
 
 		int offsetForPulse;
@@ -924,7 +924,6 @@ void CMachineTypeTrs80::PrepareWaveMetrics(CContext* c, CWaveReader* wf)
 		//printf("[using pulse threshold of %i]\n", offsetForPulse);
 		wf->SetDCOffset(-offsetForPulse);
 		wf->SetCycleLengths(info.medianShortCycleLength, info.medianLongCycleLength);
-
 	}
 	else
 	{

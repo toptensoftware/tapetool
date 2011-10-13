@@ -21,24 +21,23 @@ int CCommandSamples::Process()
 
 	CWaveReader* wf = static_cast<CWaveReader*>(_ctx->file);
 
-	int perline = _ctx->perLine ? _ctx->perLine : 32;
+	int perline = _ctx->perLine ? _ctx->perLine : (_ctx->showZeroCrossings ? 128 : 32);
 
 	wf->Seek(_ctx->from);
 
-	int prev = 0;
-	bool first = true;
+
+	CCycleDetector cd(_ctx->cycleMode);
 
 	// Dump all samples
 	int index = 0;
+	int cycleLen = 0;
 	while (wf->HaveSample())
 	{
-		if (_ctx->showZeroCrossings && !first && prev<0 != wf->CurrentSample()<0)
+		if (_ctx->showZeroCrossings && cd.IsNewCycle(wf->CurrentSample()))
 		{
+			printf("[eoc:%i]", cycleLen);
+			cycleLen=0;
 			index=0;
-		}
-		else
-		{
-			first = false;
 		}
 
 		if ((index++ % perline)==0)
@@ -50,8 +49,7 @@ int CCommandSamples::Process()
 		}
 
 		printf("%i ", wf->CurrentSample());
-
-		prev = wf->CurrentSample();
+		cycleLen++;
 
 		wf->NextSample();
 

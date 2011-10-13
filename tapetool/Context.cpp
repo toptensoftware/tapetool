@@ -15,12 +15,12 @@
 
 #include "CommandWaveStats.h"
 #include "CommandSamples.h"
+#include "CommandFilter.h"
 #include "CommandCycles.h"
 #include "CommandCycleKinds.h"
 #include "CommandBits.h"
 #include "CommandBytes.h"
 #include "CommandBlocks.h"
-
 
 // Constructor
 CContext::CContext()
@@ -44,8 +44,8 @@ CContext::CContext()
 	renderSine = false;
 	dc_offset = 0;
 	cycle_freq = 0;
-	phase_shift = false;
 	inputFormat = NULL;
+	amplify = 1.0;
 
 	byteWrapIndex = 0;
 	cmd = NULL;
@@ -53,6 +53,8 @@ CContext::CContext()
 	file = NULL;
 	renderFile = NULL;
 	binaryFile = NULL;
+
+	cycleMode = cmZeroCrossingUp;
 }
 
 CContext::~CContext()
@@ -124,6 +126,9 @@ bool CContext::OpenInputFile(Resolution res)
 
 bool CContext::OpenOutputFile(Resolution res)
 {
+	if (!cmd->UsesAutoOutputFile())
+		return true;
+
 	// Output file?
 	if (file_count<2)
 	{
@@ -315,6 +320,17 @@ int CContext::Run(int argc,char **argv)
 						samples=200;
 				}
 			}
+			else if (_strcmpi(arg, "filter")==0)
+			{
+				cmd = new CCommandFilter(this);
+
+				if (val!=NULL)
+				{
+					from = atoi(val);
+					if (samples==0)
+						samples=200;
+				}
+			}
 			else if (_strcmpi(arg, "cycles")==0)
 			{
 				cmd = new CCommandCycles(this);
@@ -358,7 +374,7 @@ int CContext::Run(int argc,char **argv)
 			{
 				showPositionInfo = false;
 			}
-			else if (_strcmpi(arg, "zc")==0)
+			else if (_strcmpi(arg, "showcycles")==0)
 			{
 				showZeroCrossings = true;
 			}
@@ -412,9 +428,21 @@ int CContext::Run(int argc,char **argv)
 			{
 				cycle_freq = val;
 			}
-			else if (_strcmpi(arg, "phaseshift")==0)
+			else if (_strcmpi(arg, "amplify")==0)
 			{
-				phase_shift = true;
+				amplify = val==NULL ? 1.0 : (atof(val)/100);
+			}
+			else if (_strcmpi(arg, "cyclemode")==0)
+			{
+				if (!CCycleDetector::FromString(val, cycleMode))
+				{
+					fprintf(stderr, "Invalid cycle mode: `%s`\n",  val);
+					return 7;
+				}
+			}
+			else if (_strcmpi(arg, "normcycles")==0)
+			{
+				norm_cycles = true;
 			}
 			else if (_strcmpi(arg, "trs80")==0)
 			{
@@ -489,6 +517,7 @@ int CContext::Run(int argc,char **argv)
 
 	printf("\nWhat to Output:\n");
 	printf("  --wavestats[:from]    display various stats about the wave file\n");
+	printf("  --filter[:from]       process wave samples to a new wave file applying --smooth, --dcoffset and --amplify\n");
 	printf("  --samples[:from]      process wave samples (optionally starting at sample number <from>)\n");
 	printf("  --cycles              process wave cycle lengths\n");
 	printf("  --cyclekinds          process wave cycle kinds (long/short)\n");
@@ -500,14 +529,22 @@ int CContext::Run(int argc,char **argv)
 	printf("  --smooth[:N]          smooth waveform with a moving average of N samples (N=3 if not specified)\n");
 	printf("  --noanalyze           determine cycle length by analysis (don't trust sample rate)\n");
 	printf("  --allowbadcycles      dont limit check cycle lengths (within reason)\n");
-	printf("  --dcoffset:[N]        offset sample values by this amount\n");
-	printf("  --cyclefreq:[N]       explicitly set the short cycle frequency\n");
+	printf("  --dcoffset:N          offset sample values by this amount\n");
+	printf("  --amplify:N           amplify input signal by N%\n");
+	printf("  --cyclefreq:N         explicitly set the short cycle frequency\n");
+	printf("  --cyclemode:mode      cycle detection mode\n");                 
+	printf("                             'zc+' = zero crossing upwards\n");
+	printf("                             'zc-' = zero crossing downwards\n");
+	printf("                             'max' = local maximum\n");
+	printf("                             'min' = local minimum\n");
+	printf("                             'max+' = local maximum with positive sample value\n");
+	printf("                             'max-' = local minimum with negative sample value\n");
 
 	printf("\nText Output Formatting:\n");
 	printf("  --syncinfo            show details of bit and byte sync operations\n");
 	printf("  --perline:N           display N piece of data per line (default depends on data kind)\n");
 	printf("  --noposinfo           don't dump position info\n");
-	printf("  --zc                  start a new line at zero crossings with --samples\n");
+	printf("  --showcycles          show cycle boundaries with --samples\n");
 	printf("  --samplecount         number of samples to dump with --samples\n");
 
 	printf("\nWave Output Options\n");

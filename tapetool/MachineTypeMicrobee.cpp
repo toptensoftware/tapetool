@@ -553,7 +553,7 @@ int CMachineTypeMicrobee::ProcessBlocks(CContext* c)
 		int bytesRemaining = header.datalen - blockAddr;
 		int iBytesThisBlock = bytesRemaining > 256 ? 256 : bytesRemaining;
 
-		printf("\n[data block 0x%.4x, %i bytes]\n", blockAddr, iBytesThisBlock);
+		printf("\n[@%12i][data block 0x%.4x, %i bytes]\n", c->file->CurrentPosition(), blockAddr, iBytesThisBlock);
 		c->ResetByteDump();
 		unsigned char checksum=iBytesThisBlock;
 
@@ -597,7 +597,7 @@ int CMachineTypeMicrobee::ProcessBlocks(CContext* c)
 		}
 		if (checksum!=0)
 		{
-			printf("\nCheck sum error: %i\n\n", checksum);
+			printf("\nCheck sum error: %.2x\n\n", checksum);
 			return 7;
 		}
 
@@ -618,7 +618,7 @@ void CMachineTypeMicrobee::PrepareWaveMetrics(CContext* c, CWaveReader* wf)
 		WAVE_INFO info;
 
 		fprintf(stderr, "\n\nAnalysing wave data...");
-		AnalyseWave(wf, 0, 0, c->phase_shift, info);
+		AnalyseWave(wf, 0, 0, info);
 		fprintf(stderr, "\n\n");
 
 		wf->SetCycleLengths(info.medianShortCycleLength, info.medianLongCycleLength);

@@ -27,7 +27,7 @@ int CCommandWaveStats::Process()
 
 	// Analyse the wave
 	WAVE_INFO info;
-	AnalyseWave(wf, _ctx->from, _ctx->samples, _ctx->phase_shift, info);
+	AnalyseWave(wf, _ctx->from, _ctx->samples, info);
 
 	fprintf(stderr, "\n\n");
 
@@ -44,7 +44,6 @@ int CCommandWaveStats::Process()
 	printf("    Median Max Amplitude:      %i\n", info.medianMaxAmplitude);
 	printf("    Median Short Cycle:        %i (%.1fHz)\n", info.medianShortCycleLength, info.medianShortCycleFrequency);
 	printf("    Median Long Cycle:         %i (%.1fHz)\n", info.medianLongCycleLength, info.medianLongCycleFrequency);
-	printf("    Average Half-Cycle ratio:  %.1f%%\n", info.avgCrossingRatio * 100);
 	printf("]");							  
 
 	printf("\n\n");

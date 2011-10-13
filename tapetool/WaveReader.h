@@ -5,6 +5,7 @@
 #define __WAVEREADER_H
 
 #include "FileReader.h"
+#include "CycleDetector.h"
 
 // CWaveFileReader - reads audio data from a tape recording
 class CWaveReader : public CFileReader
@@ -35,13 +36,16 @@ public:
 	void SetCycleLengths(int shortCycleSamples, int longCycleSamples);
 	void SetDCOffset(int offset);
 	int GetDCOffset();
+	void SetAmplify(double dbl);
+	double GetAmplify();
+	void SetCycleMode(CycleMode mode);
+	CycleMode GetCycleMode();
 
 	bool NextSample();
 	bool HaveSample();
 	int CurrentSample();
 	int ReadRawSample();
 	int ReadSmoothedSample();
-	int ReadHalfCycle();
 
 	FILE* _file;
 	int _waveOffsetInBytes;
@@ -63,8 +67,9 @@ public:
 	int _smoothingBufferTotal;
 	int _lastCycleLen;
 	int _dc_offset;
+	double _amplify;
 	int _cycle_frequency;
-
+	CCycleDetector	_cd;
 };
 
 #endif	// __WAVEREADER_H

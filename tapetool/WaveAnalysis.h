@@ -10,7 +10,6 @@ struct WAVE_INFO
 {
 	int totalSamples;
 	int totalCycles;
-	int zeroCrossings;
 	int sampleRate;
 	int minAmplitude;
 	int maxAmplitude;
@@ -22,11 +21,10 @@ struct WAVE_INFO
 	double medianShortCycleFrequency;
 	int medianLongCycleLength;
 	double medianLongCycleFrequency;
-	double avgCrossingRatio;
 };
 
 
-void AnalyseWave(CWaveReader* wf, int from, int samples, bool phase_shift, WAVE_INFO& info);
+void AnalyseWave(CWaveReader* wf, int from, int samples, WAVE_INFO& info);
 
 #endif	// __WAVEANALYSIS_H
 
