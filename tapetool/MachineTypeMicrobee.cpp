@@ -36,6 +36,7 @@ CMachineTypeMicrobee::~CMachineTypeMicrobee()
 
 void CMachineTypeMicrobee::SetOutputBaud(int baud)
 {
+	assert(baud==600 || baud==1200 || baud==300);
 	_baud = baud;
 }
 
@@ -154,6 +155,26 @@ int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 	int cyclesRead = 0;			// The number of cycles in the current bit that have been read
 	int actualCyclesRead = 0;	// The number of cycles read, including possible 1 extra for the lead slip
 	bool resynced = false;		// Have we lead slip resynced
+
+	// Are we in highspeed mode?
+	int speedMultiplier = 1;
+	if (savePos >= reader->_ctx->speedChangePos)
+	{
+		switch (reader->_ctx->speedChangeSpeed)
+		{
+			case 300:
+				speedMultiplier = 1;
+				break;
+
+			case 600:
+				speedMultiplier = 2;
+				break;
+
+			default:
+				speedMultiplier = 4;
+				break;
+		}
+	}
 		
 	while (true)
 	{
@@ -170,15 +191,22 @@ int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 		// First cycle
 		if (cyclesRead == 1)
 		{
+			if (cycle=='L' && speedMultiplier==4)
+			{ 
+				return 0;
+			}
+
 			if (cycle=='S' || cycle=='L')
 			{
 				bitKind = cycle;
+
 			}
+
 			continue;
 		}
 
-		// Allow a bit resync after the first cycle
-		if (cyclesRead == 2 && ((cycle=='S' && bitKind=='L') || (cycle=='L' && bitKind=='S')))
+		// Allow a bit resync after the first cycle (only in 300 baud mode)
+		if (speedMultiplier==1 && cyclesRead == 2 && ((cycle=='S' && bitKind=='L') || (cycle=='L' && bitKind=='S')))
 		{
 			if (resynced)
 			{
@@ -209,7 +237,7 @@ int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 		}
 
 		// How many cycles are typical for this bit kind?
-		int expectedCycles = bitKind == 'S' ? 8 : 4;
+		int expectedCycles = (bitKind == 'S' ? 8 : 4) / speedMultiplier;
 
 		// Internal cycle
 		if (cyclesRead <= expectedCycles-1)
@@ -363,15 +391,29 @@ void CMachineTypeMicrobee::RenderCycleKind(CWaveWriter* writer, char kind)
 
 void CMachineTypeMicrobee::RenderBit(CWaveWriter* writer, unsigned char bit)
 {
+	writer->RenderWave( (bit ? 8 : 4) / (_baud/300), writer->SampleRate() / _baud);
+
+	/*
 	if (_baud == 300)
 	{
 		if (bit)
 		{
-			writer->RenderWave(8, writer->SampleRate() / 300);
+			writer->RenderWave(8, writer->SampleRate() / _baud);
 		}
 		else
 		{
-			writer->RenderWave(4, writer->SampleRate() / 300);
+			writer->RenderWave(4 , writer->SampleRate() / _baud);
+		}
+	}
+	else if (
+	{
+		if (bit)
+		{
+			writer->RenderWave(2, writer->SampleRate() / 1200);
+		}
+		else
+		{
+			writer->RenderWave(1, writer->SampleRate() / 1200);
 		}
 	}
 	else
@@ -385,6 +427,7 @@ void CMachineTypeMicrobee::RenderBit(CWaveWriter* writer, unsigned char bit)
 			writer->RenderWave(1, writer->SampleRate() / 1200);
 		}
 	}
+	*/
 }
 
 void CMachineTypeMicrobee::RenderByte(CWaveWriter* writer, unsigned char byte)
@@ -495,10 +538,31 @@ int CMachineTypeMicrobee::ProcessBlocks(CContext* c)
 	if (c->IsOutputKind("bee"))
 		fwrite(header_bytes, 16, 1, c->binaryFile);
 
+	// Highspeed read?
+	if (header.speed && c->speedChangePos==0x7FFFFFFF)
+	{
+		c->speedChangePos = c->file->CurrentPosition();
+		c->speedChangeSpeed = header.speed == 2 ? 600 : 1200;
+	}
+
 	if (c->renderFile!=NULL)
 	{
 		// Flip the speed byte if necessary
-		header.speed = c->renderBaud == 300 ? 0 : 0xFF;
+		switch (c->renderBaud)
+		{
+			case 1200:
+				header.speed = 0xFF;
+				break;
+
+			case 600:
+				header.speed = 2;		// not documented but used by the Machine Code Tutorial tapes for 
+										// main content after the tiny loader
+				break;
+
+			default:
+				header.speed = 0;
+				break;
+		}
 
 		// Calculate a new checksum
 		checksum=sizeof(header);
@@ -536,14 +600,16 @@ int CMachineTypeMicrobee::ProcessBlocks(CContext* c)
 	printf("    data length:  0x%.4x (%i) bytes\n", header.datalen, header.datalen);
 	printf("    load addr:    0x%.4x\n", header.loadaddr);
 	printf("    start addr:   0x%.4x\n", header.startaddr);
-	printf("    speed:        %s\n", header.speed == 0 ? "300 baud" : "1200 baud" );
+	printf("    speed:        %s baud\n", header.speed == 0 ? "300" : (header.speed==2 ? "600" : "1200" ));
 	printf("    auto start:   %s\n", header.autostart == 0xFF ? "yes" : "no" );
 
 	printf("]\n\n");
 
-	if (c->renderFile!=NULL && c->renderBaud==1200)
+	// Switch bit rendering to correct baud rate
+	if (c->renderFile!=NULL)
 	{
-		SetOutputBaud(1200);
+		if (c->renderBaud==1200 || c->renderBaud==600)
+			SetOutputBaud(c->renderBaud);
 	}
 
 	int blockAddr = 0;

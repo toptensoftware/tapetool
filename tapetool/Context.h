@@ -31,7 +31,7 @@ public:
 	int samples;
 	bool showZeroCrossings;
 	bool allowBadCycles;
-	int leadingSilence;
+	double leadingSilence;
 	int leadingZeros;
 	bool autoAnalyze;
 	int renderSampleRate;
@@ -48,6 +48,8 @@ public:
 	const char* outputExtension;
 	const char* inputFormat;
 	CycleMode cycleMode;
+	int speedChangePos;
+	int speedChangeSpeed;
 
 	CCommand* cmd;
 
@@ -68,6 +70,9 @@ public:
 
 	void ResetByteDump();
 	void DumpByte(int byte);
+
+	void ShowLogo();
+	void ShowUsage();
 
 
 protected:

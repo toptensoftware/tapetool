@@ -22,6 +22,9 @@
 #include "CommandBytes.h"
 #include "CommandBlocks.h"
 
+#define VER_MAJOR	0
+#define VER_MINOR	3
+
 // Constructor
 CContext::CContext()
 {
@@ -34,7 +37,7 @@ CContext::CContext()
 	samples = 0;
 	showZeroCrossings = false;
 	allowBadCycles = false;
-	leadingSilence = 2;
+	leadingSilence = 2.0;
 	leadingZeros = 0;
 	autoAnalyze = true;
 	renderSampleRate = 24000;
@@ -46,6 +49,8 @@ CContext::CContext()
 	cycle_freq = 0;
 	inputFormat = NULL;
 	amplify = 1.0;
+	speedChangePos= 0x7FFFFFFF;
+	speedChangeSpeed = 0;
 
 	byteWrapIndex = 0;
 	cmd = NULL;
@@ -189,7 +194,7 @@ bool CContext::OpenRenderFile(const char* filename)
 	}
 
 	// Render leading silence
-	renderFile->RenderSilence(renderFile->SampleRate() * leadingSilence);
+	renderFile->RenderSilence((int)(leadingSilence * renderFile->SampleRate()));
 
 	// Render additional leading zeros
 	for (int i=0; i<leadingZeros; i++)
@@ -384,7 +389,7 @@ int CContext::Run(int argc,char **argv)
 			}
 			else if (_strcmpi(arg, "leadingsilence")==0)
 			{
-				leadingSilence = val==NULL ? 0 : atoi(val);
+				leadingSilence = val==NULL ? 0 : atof(val);
 			}
 			else if (_strcmpi(arg, "leadingzeros")==0)
 			{
@@ -405,12 +410,7 @@ int CContext::Run(int argc,char **argv)
 			}
 			else if (_strcmpi(arg, "baud")==0)
 			{
-				renderBaud = val==NULL ? 300 : atoi(val);
-				if (renderBaud!=300 && renderBaud!=1200)
-				{
-					fprintf(stderr, "Invalid render baud rate - must be 300 or 1200");
-					return 7;
-				}
+				renderBaud = val==NULL ? 0 : atoi(val);
 			}
 			else if (_strcmpi(arg, "volume")==0)
 			{
@@ -444,6 +444,14 @@ int CContext::Run(int argc,char **argv)
 			{
 				norm_cycles = true;
 			}
+			else if (_strcmpi(arg, "speedchangepos")==0)
+			{
+				speedChangePos= val==NULL ? 0 : atoi(val);
+			}
+			else if (_strcmpi(arg, "speedchangespeed")==0)
+			{
+				speedChangeSpeed= val==NULL ? 0 : atoi(val);
+			}
 			else if (_strcmpi(arg, "trs80")==0)
 			{
 				machine = new CMachineTypeTrs80();
@@ -459,6 +467,17 @@ int CContext::Run(int argc,char **argv)
 			else if (_strcmpi(arg, "inputformat")==0)
 			{
 				inputFormat	= val;
+			}
+			else if (_strcmpi(arg, "help")==0 || _strcmpi(arg, "?")==0)
+			{
+				ShowLogo();
+				ShowUsage();
+				return 0;
+			}
+			else if (_strcmpi(arg, "version")==0)
+			{
+				ShowLogo();
+				return 0;
 			}
 			else
 			{
@@ -491,10 +510,21 @@ int CContext::Run(int argc,char **argv)
 		return retv;
 	}
 
-	// Show some help
-	printf("tapetool - Microbee Tape Diagnotic Utility\n");
-	printf("Copyright (C) 2011 Topten Software.\n");
+	ShowLogo();
+	ShowUsage();
+	return 0;
+}
 
+
+void CContext::ShowLogo()
+{
+	// Show some help
+	printf("tapetool v%i.%i - Microbee/TRS-80 Tape Diagnotic Utility\n", VER_MAJOR, VER_MINOR);
+	printf("Copyright (C) 2011 Topten Software.\n");
+}
+
+void CContext::ShowUsage()
+{
 	printf("\nUsage: tapetool [options] inputFile [outputFile]\n\n");
 
 	printf("The input file can be either:\n");
@@ -509,10 +539,14 @@ int CContext::Run(int argc,char **argv)
 	printf("  - .cas - generates a TRS-80 cassette file\n");
 	printf("  - anything else - generates a raw binary containing the input data\n");
 
+	printf("\nGeneral:\n");
+	printf("  --version             Show version number\n");
+	printf("  --help                Show these usage instructions\n");
+
 	printf("\nMachine Type:\n");
 	printf("  --trs80               TRS-80 mode\n");
 	printf("  --microbee            Microbee mode\n");
-	printf("  --inputformat:fmt		Set the input file format (eg: cas, tap, bin etc...)\n");
+	printf("  --inputformat:fmt     Set the input file format (eg: cas, tap, bin etc...)\n");
 
 
 	printf("\nWhat to Output:\n");
@@ -532,6 +566,8 @@ int CContext::Run(int argc,char **argv)
 	printf("  --dcoffset:N          offset sample values by this amount\n");
 	printf("  --amplify:N           amplify input signal by N%\n");
 	printf("  --cyclefreq:N         explicitly set the short cycle frequency\n");
+	printf("  --speedchangepos:N    specify an explicit speed change at N\n");
+	printf("  --speedchangespeed:N  specify the new speed (in baud) at the speed change point\n");
 	printf("  --cyclemode:mode      cycle detection mode\n");                 
 	printf("                             'zc+' = zero crossing upwards\n");
 	printf("                             'zc-' = zero crossing downwards\n");
@@ -547,16 +583,13 @@ int CContext::Run(int argc,char **argv)
 	printf("  --showcycles          show cycle boundaries with --samples\n");
 	printf("  --samplecount         number of samples to dump with --samples\n");
 
-	printf("\nWave Output Options\n");
-	printf("  --leadingsilence:N    render N seconds of leading silence (default = 2)\n");
+	printf("\nWave Output Options:\n");
+	printf("  --leadingsilence:N    render N seconds of leading silence (default = 2.0)\n");
 	printf("  --leadingzeros:N      render an additional N leading zeros\n");
 	printf("  --samplerate:N        render using sample rate of N (default = 24000)\n");
 	printf("  --samplesize:N        render using 8 or 16 bit samples (default = 8)\n");
 	printf("  --volume:N            render volume percent (default = 10%)\n");
-	printf("  --baud:N              render baud rate 300 or 1200 (default = 300)\n");
+	printf("  --baud:N              render baud rate\n");
 	printf("  --sine                render using sine (instead of square) waves\n");
 	printf("\n");
-
-	return 7;
-
 }
