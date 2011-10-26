@@ -4,48 +4,38 @@
 #ifndef __WAVEREADER_H
 #define __WAVEREADER_H
 
-#include "FileReader.h"
-#include "CycleDetector.h"
-
 // CWaveFileReader - reads audio data from a tape recording
-class CWaveReader : public CFileReader
+class CWaveReader
 {
 public:
-			CWaveReader(CContext* ctx);
+			CWaveReader();
 	virtual ~CWaveReader();
 
 	void Close();
 	int GetBytesPerSample();
 	int GetSampleRate();
 	int GetTotalSamples();
+	const char* GetFileName();
 
-	virtual bool Open(const char* filename, Resolution res);
-	virtual const char* GetDataFormat();
-	virtual Resolution GetResolution();
-	virtual void Delete();
-	virtual bool IsWaveFile();
-	virtual int CurrentPosition();
-	virtual char* FormatDuration(int duration);
-	virtual void Seek(int sampleNumber);
-	virtual int ReadCycleLen();
-	virtual char ReadCycleKind();
-	virtual int LastCycleLen();
-	virtual void Prepare();
+	bool OpenFile(const char* filename);
 
-	void SetShortCycleFrequency(int freq);
-	void SetCycleLengths(int shortCycleSamples, int longCycleSamples);
 	void SetDCOffset(int offset);
 	int GetDCOffset();
 	void SetAmplify(double dbl);
 	double GetAmplify();
-	void SetCycleMode(CycleMode mode);
-	CycleMode GetCycleMode();
+	void SetSmoothingPeriod(int period);
+	int GetSmoothingPeriod();
+
+
+	int CurrentPosition();
+	void SeekRaw(int sampleNumber);
+	void Seek(int sampleNumber);
 
 	bool NextSample();
 	bool HaveSample();
 	int CurrentSample();
 	int ReadRawSample();
-	int ReadSmoothedSample();
+	int ReadSample();
 
 	FILE* _file;
 	int _waveOffsetInBytes;
@@ -55,21 +45,14 @@ public:
 	int _currentSampleNumber;
 	int _sampleRate;
 	int _bytesPerSample;
-	int _avgCycleLength;
-	int _shortCycleLength;
-	int _longCycleLength;
-	int _cycleLengthAllowance;
 	int _currentSample;
-	int _startOfCurrentHalfCycle;
+	const char* _filename;
 	int _smoothingPeriod;
 	int* _smoothingBuffer;
 	int _smoothingBufferPos;
 	int _smoothingBufferTotal;
-	int _lastCycleLen;
 	int _dc_offset;
 	double _amplify;
-	int _cycle_frequency;
-	CCycleDetector	_cd;
 };
 
 #endif	// __WAVEREADER_H

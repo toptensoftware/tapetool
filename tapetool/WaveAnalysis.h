@@ -1,10 +1,11 @@
 //////////////////////////////////////////////////////////////////////////
-// WaveAnalysis.h - declaration of CWaveReader class
+// WaveAnalysis.h - declaration of CTapeReader class
 
 #ifndef __WAVEANALYSIS_H
 #define __WAVEANALYSIS_H
 
 class CWaveReader;
+enum CycleMode;
 
 struct WAVE_INFO
 {
@@ -24,7 +25,7 @@ struct WAVE_INFO
 };
 
 
-void AnalyseWave(CWaveReader* wf, int from, int samples, WAVE_INFO& info);
+void AnalyseWave(CWaveReader* wf, CycleMode cycleMode, int from, int samples, WAVE_INFO& info);
 
 #endif	// __WAVEANALYSIS_H
 

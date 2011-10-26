@@ -10,10 +10,10 @@
 int CCommandCycles::Process()
 {
 	// Open the file
-	if (!_ctx->OpenFiles(resCycles))
+	if (!OpenFiles(resCycles))
 		return 7;
 
-	int perline = _ctx->perLine ? _ctx->perLine : 16;
+	int perline = perLine ? perLine : 16;
 
 	// Dump all cycles
 	int index = 0;
@@ -21,13 +21,13 @@ int CCommandCycles::Process()
 	{
 		if ((index++ % perline)==0)
 		{
-			if (_ctx->showPositionInfo)
-				printf("\n[@%12i] ", _ctx->file->CurrentPosition());
+			if (showPositionInfo)
+				printf("\n[@%12i] ", file->CurrentPosition());
 			else
 				printf("\n");
 		}
 
-		int cyclelen= _ctx->file->ReadCycleLen();
+		int cyclelen= file->ReadCycleLen();
 		if (cyclelen<0)
 			break;
 
@@ -41,4 +41,11 @@ int CCommandCycles::Process()
 }
 
 
+void CCommandCycles::ShowUsage()
+{
+	printf("\nUsage: tapetool cycles [OPTIONS] INPUTFILE [OUTPUTFILE]\n");
 
+	printf("\nProcesses a file at cycle-length resolution.\n");
+
+	ShowCommonUsage();
+}

@@ -4,16 +4,18 @@
 #ifndef __COMMANDBYTES_H
 #define __COMMANDBYTES_H
 
-#include "Command.h"
+#include "CommandStd.h"
 
-class CCommandBytes : public CCommand
+class CCommandBytes : public CCommandStd
 {
 public:
-	CCommandBytes(CContext* ctx) : CCommand(ctx)
+	CCommandBytes(CContext* ctx) : CCommandStd(ctx)
 	{
 	}
 
 	virtual int Process();
+	virtual const char* GetCommandName() { return "bytes"; }
+	virtual void ShowUsage();
 };
 
 #endif	// __COMMANDBYTES_H

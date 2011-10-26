@@ -5,7 +5,6 @@
 
 #include "WaveWriter.h"
 
-
 CWaveWriter::CWaveWriter()
 {
 	_file = NULL;
@@ -19,6 +18,7 @@ CWaveWriter::~CWaveWriter()
 	Close();
 }
 
+
 // Create the wave file
 bool CWaveWriter::Create(const char* fileName, int sampleRate, int sampleSize)
 {
@@ -26,7 +26,7 @@ bool CWaveWriter::Create(const char* fileName, int sampleRate, int sampleSize)
 	_file = fopen(fileName, "wb");
 	if (_file==NULL)
 	{
-	    fprintf(stderr, "Could not create %s\n", fileName);
+	    fprintf(stderr, "Could not create '%s' - %s (%i)\n", fileName, strerror(errno), errno);
 		return false;
 	}
 
@@ -77,6 +77,11 @@ void CWaveWriter::Close()
 
 }
 
+int CWaveWriter::CurrentPosition()
+{
+	return (ftell(_file) - sizeof(WAVEHEADER)) / (_waveHeader.bitsPerSample/8);
+}
+
 void CWaveWriter::InitWaveHeader(int sampleRate, int sampleSize)
 {
 	// RIFF chunk
@@ -106,6 +111,21 @@ int CWaveWriter::SampleRate()
 
 void CWaveWriter::RenderSample(short sample)
 {
+	if (_waveHeader.bitsPerSample==8)
+	{
+		char ch = (char)(sample + 128);
+		fwrite(&ch, sizeof(ch), 1, _file);	
+	}
+	else
+	{
+		fwrite(&sample, sizeof(sample), 1, _file);	
+	}
+
+	_lastSquareSample = sample;
+}
+
+void CWaveWriter::RenderSquaredOffSample(short sample)
+{
 	// Make it square
 	if (_square)
 	{
@@ -116,19 +136,10 @@ void CWaveWriter::RenderSample(short sample)
 		else
 		{
 			sample = sample < 0 ? -_amplitude : _amplitude;
-			_lastSquareSample = sample;
 		}
 	}
 
-	if (_waveHeader.bitsPerSample==8)
-	{
-		char ch = (char)(sample + 128);
-		fwrite(&ch, sizeof(ch), 1, _file);	
-	}
-	else
-	{
-		fwrite(&sample, sizeof(sample), 1, _file);	
-	}
+	RenderSample(sample);
 }
 
 void CWaveWriter::RenderSilence(int samples)
@@ -143,7 +154,7 @@ void CWaveWriter::RenderWave(int cycles, int samples)
 	{
 		double in = 2.0*PI*cycles*i/samples;
 		double curve = sin(in);
-		RenderSample(short(curve * _amplitude));
+		RenderSquaredOffSample(short(curve * _amplitude));
 	}
 }
 
@@ -202,3 +213,8 @@ void CWaveWriter::RenderByte(unsigned char byte)
 }
 
 */
+
+void CWaveWriter::RenderProfiledBit(int bit, int speed)
+{
+	assert(false);
+}

@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-// MachineTypeMicrobee.h - declaration of CWaveReader class
+// MachineTypeMicrobee.h - declaration of CTapeReader class
 
 #ifndef __MACHINETYPEMICROBEE_H
 #define __MACHINETYPEMICROBEE_H
@@ -17,9 +17,9 @@ public:
 	void SetOutputBaud(int baud);
 
 	virtual const char* GetTapeFormatName() { return "tap"; };
-	virtual CFileReader* CreateFileReader(CContext* ctx, const char* pszExt);
+	virtual CFileReader* CreateFileReader(CCommandStd* ctx, const char* pszExt);
 
-	virtual void PrepareWaveMetrics(CContext* c, CWaveReader* wf);
+	virtual void PrepareWaveMetrics(CCommandStd* c, CTapeReader* wf);
 	
 	virtual bool SyncToBit(CFileReader* reader, bool verbose);
 	virtual int ReadBit(CFileReader* reader, bool verbose);
@@ -30,7 +30,7 @@ public:
 	virtual void RenderBit(CWaveWriter* writer, unsigned char bit);
 	virtual void RenderByte(CWaveWriter* writer, unsigned char byte);
 
-	virtual int ProcessBlocks(CContext* c);
+	virtual int ProcessBlocks(CCommandStd* c);
 
 	virtual bool CanRenderSquare() { return true; }
 

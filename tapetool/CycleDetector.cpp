@@ -120,7 +120,7 @@ bool CCycleDetector::FromString(const char* psz, CycleMode& mode)
 	if (_stricmp(psz, "zc+")==0)
 		mode = cmZeroCrossingUp;
 	else if (_stricmp(psz, "zc-")==0)
-		mode = cmZeroCrossingUp;
+		mode = cmZeroCrossingDown;
 	else if (_stricmp(psz, "max")==0)
 		mode = cmMaxima;
 	else if (_stricmp(psz, "min")==0)

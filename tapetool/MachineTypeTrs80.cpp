@@ -6,8 +6,9 @@
 #include "MachineTypeTrs80.h"
 #include "FileReader.h"
 #include "WaveWriter.h"
-#include "Context.h"
+#include "CommandStd.h"
 #include "WaveAnalysis.h"
+#include "TapeReader.h"
 
 const char* basic_keywords[] = {
 	"END",
@@ -423,7 +424,7 @@ enum FileType
 };
 
 // Command handler for dumping formatted header block and CRC checked data blocks
-int CMachineTypeTrs80::ProcessBlocks(CContext* c)
+int CMachineTypeTrs80::ProcessBlocks(CCommandStd* c)
 {
 	// Open files
 	if (!c->OpenFiles(resBytes))
@@ -623,10 +624,13 @@ int CMachineTypeTrs80::ProcessBlocks(CContext* c)
 
 	printf("\n\n[eof]\n");
 
+	if (c->renderFile)
+		c->renderFile->Flush();
+
 	return 0;
 }
 
-bool CMachineTypeTrs80::ProcessSystemBlock(CContext* c, bool verbose)
+bool CMachineTypeTrs80::ProcessSystemBlock(CCommandStd* c, bool verbose)
 {
 /*
 SYSTEM TAPE FORMAT
@@ -741,7 +745,7 @@ lsb,msb                 entry point address
 	}
 }
 
-bool CMachineTypeTrs80::ProcessSourceBlock(CContext* c, bool verbose)
+bool CMachineTypeTrs80::ProcessSourceBlock(CCommandStd* c, bool verbose)
 {
 /*
 EDITOR/ASSEMBLER SOURCE TAPE FORMAT
@@ -819,7 +823,7 @@ xx xx xx xx xx xx       6 character file name in ASCII
 	}
 }
 
-bool CMachineTypeTrs80::ProcessBasicBlock(CContext* c, bool verbose)
+bool CMachineTypeTrs80::ProcessBasicBlock(CCommandStd* c, bool verbose)
 {
 /*
 BASIC TAPE FORMAT
@@ -900,7 +904,7 @@ xx                      1 character file name in ASCII
 	}
 }
 
-void CMachineTypeTrs80::PrepareWaveMetrics(CContext* c, CWaveReader* wf)
+void CMachineTypeTrs80::PrepareWaveMetrics(CCommandStd* c, CTapeReader* wf)
 {
 	if (c->autoAnalyze)
 	{
@@ -908,7 +912,7 @@ void CMachineTypeTrs80::PrepareWaveMetrics(CContext* c, CWaveReader* wf)
 
 		fprintf(stderr, "\n\nAnalysing wave data...");	
 		
-		AnalyseWave(wf, 0, 0, info);
+		AnalyseWave(wf->GetWaveReader(), c->_cycleDetector.GetMode(), 0, 0, info);
 		fprintf(stderr, "\n\n");
 
 		int offsetForPulse;
@@ -922,15 +926,16 @@ void CMachineTypeTrs80::PrepareWaveMetrics(CContext* c, CWaveReader* wf)
 		}
 
 		//printf("[using pulse threshold of %i]\n", offsetForPulse);
-		wf->SetDCOffset(-offsetForPulse);
+		if (wf->GetWaveReader()->GetDCOffset()==0)
+			wf->GetWaveReader()->SetDCOffset(-offsetForPulse);
 		wf->SetCycleLengths(info.medianShortCycleLength, info.medianLongCycleLength);
 	}
 	else
 	{
 		wf->SetShortCycleFrequency(1024);
-		if (wf->GetDCOffset()==0)
+		if (wf->GetWaveReader()->GetDCOffset()==0)
 		{
-			printf("[WARNING: no DC offset set, pulse detection won't work]\n");
+			printf("[WARNING: no DC offset set, pulse detection probably won't work]\n");
 		}
 	}
 }
@@ -941,7 +946,7 @@ int CMachineTypeTrs80::CycleFrequency()
 	return 1024;
 }
 
-int CMachineTypeTrs80::DcOffset(CWaveReader* wave)
+int CMachineTypeTrs80::DcOffset(CTapeReader* wave)
 {
 	fprintf(stderr, "\n\nAnalysing wave to determine pulse threshold...");
 	WAVE_INFO info;

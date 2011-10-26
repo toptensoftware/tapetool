@@ -4,17 +4,22 @@
 #ifndef __COMMANDSAMPLES_H
 #define __COMMANDSAMPLES_H
 
-#include "Command.h"
+#include "CommandWithRangedInputWaveFile.h"
 
-class CCommandSamples : public CCommand
+class CCommandSamples : public CCommandWithRangedInputWaveFile
 {
 public:
-	CCommandSamples(CContext* ctx) : CCommand(ctx)
-	{
-	}
+	CCommandSamples();
 
 	virtual int Process();
-	virtual bool DoesTranslateFromWaveData() { return false; }
+	virtual int AddSwitch(const char* arg, const char* val);
+	virtual const char* GetCommandName() { return "samples"; };
+
+	void ShowUsage();
+
+	int _perline;
+	bool _showCycles;
+	bool _showPositionInfo;
 };
 
 #endif	// __COMMANDSAMPLES_H

@@ -1,10 +1,11 @@
 //////////////////////////////////////////////////////////////////////////
-// FileReader.h - declaration of CWaveReader class
+// FileReader.h - declaration of CTapeReader class
 
 #ifndef __FILEREADER_H
 #define __FILEREADER_H
 
-class CContext;
+class CInstrumentation;
+class CCommandStd;
 
 // Various resolutions at which data can be processed
 enum Resolution
@@ -23,7 +24,7 @@ enum Resolution
 class CFileReader
 {
 public:
-	CFileReader(CContext* ctx);
+	CFileReader(CCommandStd* cmd);
 
 	virtual bool Open(const char* fileName, Resolution res)=0;
 	virtual const char* GetDataFormat()=0;
@@ -42,10 +43,11 @@ public:
 	virtual int ReadBit(bool verbose = true);
 	virtual bool SyncToByte(bool verbose);
 	virtual int ReadByte(bool verbose=true);
+	virtual CInstrumentation* GetInstrumentation() { return NULL; }
 
 	char ReadCycleKindChecked(bool verbose);
 
-	CContext* _ctx;
+	CCommandStd* _cmd;
 };
 
 #endif	// __FILEREADER_H

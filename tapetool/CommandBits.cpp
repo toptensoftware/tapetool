@@ -10,23 +10,23 @@
 int CCommandBits::Process()
 {
 	// Open files
-	if (!_ctx->OpenFiles(resBits))
+	if (!OpenFiles(resBits))
 		return 7;
 
 	printf("\n");
-	_ctx->file->SyncToBit(_ctx->showSyncData);
+	file->SyncToBit(showSyncData);
 	printf("\n\n");
 
-	int perline = _ctx->perLine ? _ctx->perLine : 64;
+	int perline = perLine ? perLine : 64;
 
 	// Dump all bits
 	int index = 0;
 	while (true)
 	{
-		int savePos = _ctx->file->CurrentPosition();
+		int savePos = file->CurrentPosition();
 
 		// Read a bit
-		int bit = _ctx->file->ReadBit();
+		int bit = file->ReadBit();
 
 		// Force line break on error
 		if (bit<0)
@@ -35,12 +35,12 @@ int CCommandBits::Process()
 
 			printf("[last bit ended at %i]\n", savePos);
 
-			_ctx->file->Seek(savePos);
-			if (!_ctx->file->SyncToBit(_ctx->showSyncData))
+			file->Seek(savePos);
+			if (!file->SyncToBit(showSyncData))
 				break;
 
-			int skipped = _ctx->file->CurrentPosition() - savePos;
-			printf("\n[skipped %s while re-syncing]\n", _ctx->file->FormatDuration(skipped));
+			int skipped = file->CurrentPosition() - savePos;
+			printf("\n[skipped %s while re-syncing]\n", file->FormatDuration(skipped));
 
 			printf("\n");
 
@@ -51,19 +51,30 @@ int CCommandBits::Process()
 		// New line?
 		if ((index++ % perline)==0)
 		{
-			if (_ctx->showPositionInfo)
+			if (showPositionInfo)
 				printf("\n[@%12i] ", savePos);
 			else
 				printf("\n");
 		}
 
 		printf("%i", bit);
-		if (_ctx->renderFile)
-			_ctx->machine->RenderBit(_ctx->renderFile, bit);
+		if (renderFile)
+			machine->RenderBit(renderFile, bit);
 	}
 
 	printf("\n\n");
 
+	if (renderFile)
+		renderFile->Flush();
+
 	return 0;
 }
 
+void CCommandBits::ShowUsage()
+{
+	printf("\nUsage: tapetool bits [OPTIONS] INPUTFILE [OUTPUTFILE]\n");
+
+	printf("\nProcesses a file at bit resolution.\n");
+
+	ShowCommonUsage();
+}

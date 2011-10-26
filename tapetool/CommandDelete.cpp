@@ -4,16 +4,16 @@
 #include "precomp.h"
 
 #include "Context.h"
-#include "CommandFilter.h"
+#include "CommandDelete.h"
 
 // Constructor
-CCommandFilter::CCommandFilter()
+CCommandDelete::CCommandDelete()
 {
 	_outputFileName = NULL;
 }
 
 // Command handler for dumping samples
-int CCommandFilter::Process()
+int CCommandDelete::Process()
 {
 	if (_outputFileName==NULL)
 	{
@@ -32,10 +32,10 @@ int CCommandFilter::Process()
 
 	// Main loop
 	fprintf(stderr, "Copying samples...");
-	wave.Seek(GetStartSample());
-	while (wave.HaveSample() && wave.CurrentPosition() < GetEndSample())
+	while (wave.HaveSample())
 	{
-		writer.RenderSample(wave.CurrentSample());
+		if (wave.CurrentPosition()<GetStartSample() && wave.CurrentPosition()>=GetEndSample())
+			writer.RenderSample(wave.CurrentSample());
 		wave.NextSample();
 	}
 
@@ -45,7 +45,7 @@ int CCommandFilter::Process()
 }
 
 
-int CCommandFilter::AddFile(const char* filename)
+int CCommandDelete::AddFile(const char* filename)
 {
 	if (_filename==NULL)
 	{
@@ -66,12 +66,11 @@ int CCommandFilter::AddFile(const char* filename)
 	return 0;
 }
 
-void CCommandFilter::ShowUsage()
+void CCommandDelete::ShowUsage()
 {
-	printf("\nUsage: tapetool filter [options] inputWaveFile outputWaveFile\n");
+	printf("\nUsage: tapetool delete [options] inputWaveFile outputWaveFile\n");
 
-	printf("\nCopies all or some samples from an input wave file to a new output wave\n");
-	printf("file, optionally filtering in the process.\n");
+	printf("\nDeletes a range of samples from a wave file.\n");
 
 	printf("\nOptions:\n");
 	printf("  --help                Show these usage instructions\n");

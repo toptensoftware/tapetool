@@ -10,33 +10,33 @@
 int CCommandCycleKinds::Process()
 {
 	// Open files
-	if (!_ctx->OpenFiles(resCycleKinds))
+	if (!OpenFiles(resCycleKinds))
 		return 7;
 
-	int perline = _ctx->perLine ? _ctx->perLine : 64;
+	int perline = perLine ? perLine : 64;
 
 	// Dump all cycles
 	int index = 0;
 	while (true)
 	{
-		int pos = _ctx->file->CurrentPosition();
+		int pos = file->CurrentPosition();
 
-		char kind = _ctx->file->ReadCycleKind();
+		char kind = file->ReadCycleKind();
 		if (kind==0)
 			break;
 
 
 		if ((index++ % perline)==0)
 		{
-			if (_ctx->showPositionInfo)
+			if (showPositionInfo)
 				printf("\n[@%12i] ", pos);
 			else
 				printf("\n");
 		}
 
 		printf("%c", kind);
-		if (_ctx->renderFile)
-			_ctx->machine->RenderCycleKind(_ctx->renderFile, kind);
+		if (renderFile)
+			machine->RenderCycleKind(renderFile, kind);
 	}
 
 	printf("\n\n");
@@ -44,3 +44,11 @@ int CCommandCycleKinds::Process()
 	return 0;
 }
 
+void CCommandCycleKinds::ShowUsage()
+{
+	printf("\nUsage: tapetool cyclekinds [OPTIONS] INPUTFILE [OUTPUTFILE]\n");
+
+	printf("\nProcesses a file at cycle-kind resolution.\n");
+
+	ShowCommonUsage();
+}

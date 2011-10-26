@@ -4,16 +4,19 @@
 #ifndef __COMMANDBLOCKS_H
 #define __COMMANDBLOCKS_H
 
-#include "Command.h"
+#include "CommandStd.h"
 
-class CCommandBlocks : public CCommand
+
+class CCommandBlocks : public CCommandStd
 {
 public:
-	CCommandBlocks(CContext* ctx) : CCommand(ctx)
+	CCommandBlocks(CContext* ctx) : CCommandStd(ctx)
 	{
 	}
 
 	virtual int Process();
+	virtual const char* GetCommandName() { return "blocks"; }
+	virtual void ShowUsage();
 };
 
 #endif	// __COMMANDBLOCKS_H

@@ -4,7 +4,7 @@
 #include "precomp.h"
 
 #include "WaveAnalysis.h"
-#include "WaveReader.h"
+#include "TapeReader.h"
 
 struct BLOCK_DATA
 {
@@ -33,7 +33,7 @@ int compareInts(const void* va, const void* vb)
 	return *(int*)va - *(int*)vb;
 }
 
-void AnalyseWave(CWaveReader* wf, int from, int samples, WAVE_INFO& info)
+void AnalyseWave(CWaveReader* wf, CycleMode cycleMode, int from, int samples, WAVE_INFO& info)
 {
 	memset(&info, 0, sizeof(info));
 
@@ -64,7 +64,7 @@ void AnalyseWave(CWaveReader* wf, int from, int samples, WAVE_INFO& info)
 
 	int to = samples > 0 ? startPos + samples : 0;
 
-	CCycleDetector cd(wf->GetCycleMode());
+	CCycleDetector cd(cycleMode);
 
 	// Process all samples
 	int index = 0;
@@ -96,7 +96,7 @@ void AnalyseWave(CWaveReader* wf, int from, int samples, WAVE_INFO& info)
 
 		prev = sample;
 		wf->NextSample();
-		if (to>0 && wf->_currentSampleNumber >= to)
+		if (to>0 && wf->CurrentPosition() >= to)
 			break;
 
 		first = false;
@@ -143,7 +143,7 @@ void AnalyseWave(CWaveReader* wf, int from, int samples, WAVE_INFO& info)
 
 			prev = sample;
 			wf->NextSample();
-			if (to>0 && wf->_currentSampleNumber >= to)
+			if (to>0 && wf->CurrentPosition() >= to)
 				break;
 
 			first = false;

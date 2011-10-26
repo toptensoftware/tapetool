@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-// TextReader.h - declaration of CWaveReader class
+// TextReader.h - declaration of CTapeReader class
 
 #ifndef __TEXTREADER_H
 #define __TEXTREADER_H
@@ -10,7 +10,7 @@
 class CTextReader : public CFileReader
 {
 public:
-			CTextReader(CContext* ctx);
+			CTextReader(CCommandStd* ctx);
 	virtual ~CTextReader();
 
 

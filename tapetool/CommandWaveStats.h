@@ -4,17 +4,17 @@
 #ifndef __COMMANDWAVESTATS_H
 #define __COMMANDWAVESTATS_H
 
-#include "Command.h"
+#include "CommandWithRangedInputWaveFile.h"
 
-class CCommandWaveStats : public CCommand
+class CCommandWaveStats : public CCommandWithRangedInputWaveFile
 {
 public:
-	CCommandWaveStats(CContext* ctx) : CCommand(ctx)
-	{
-	}
+	CCommandWaveStats();
 
 	virtual int Process();
 	virtual bool DoesTranslateFromWaveData() { return false; }
+	virtual const char* GetCommandName() { return "analyse"; }
+	virtual void ShowUsage();
 };
 
 #endif	// __COMMANDWAVESTATS_H

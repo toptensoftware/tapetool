@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-// WaveWriter.h - declaration of CWaveReader class
+// WaveWriter.h - declaration of CTapeReader class
 
 #ifndef __WAVEWRITER_H
 #define __WAVEWRITER_H
@@ -32,7 +32,7 @@ struct WAVEHEADER
 class CWaveWriter
 {
 public:
-	CWaveWriter();
+			CWaveWriter();
 	virtual ~CWaveWriter();
 
 	FILE* _file;
@@ -41,16 +41,23 @@ public:
 	bool _square;
 	short _lastSquareSample;
 
+
 	bool Create(const char* fileName, int sampleRate, int sampleSize);
 	void SetVolume(int volume);
 	void SetSquare(bool square);
 	int GetAmplitude();
-	void Close();
 	void InitWaveHeader(int sampleRate, int sampleSize);
 	int SampleRate();
 	void RenderSample(short sample);
+	void RenderSquaredOffSample(short sample);
 	void RenderSilence(int samples);
 	void RenderWave(int cycles, int samples);
+	int CurrentPosition();
+	
+	virtual void Close();
+	virtual bool IsProfiled() { return false; };
+	virtual void RenderProfiledBit(int bit, int speed);
+	virtual bool Flush() { return true; };
 };
 
 #endif	// __WAVEWRITER_H

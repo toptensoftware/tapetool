@@ -6,9 +6,11 @@
 #include "MachineTypeMicrobee.h"
 #include "FileReader.h"
 #include "WaveWriter.h"
-#include "Context.h"
+#include "CommandStd.h"
 #include "TapFileReader.h"
 #include "WaveAnalysis.h"
+#include "Instrumentation.h"
+#include "TapeReader.h"
 
 #pragma pack(1)
 struct TAPE_HEADER
@@ -40,7 +42,7 @@ void CMachineTypeMicrobee::SetOutputBaud(int baud)
 	_baud = baud;
 }
 
-CFileReader* CMachineTypeMicrobee::CreateFileReader(CContext* c, const char* pszExt)
+CFileReader* CMachineTypeMicrobee::CreateFileReader(CCommandStd* c, const char* pszExt)
 {
 	if (_stricmp(pszExt, ".tap")==0)
 		return new CTapFileReader(c);
@@ -49,6 +51,8 @@ CFileReader* CMachineTypeMicrobee::CreateFileReader(CContext* c, const char* psz
 
 bool CMachineTypeMicrobee::SyncToBit(CFileReader* reader, bool verbose)
 {
+	CSyncBlock sync(reader->GetInstrumentation());
+
 	if (verbose)
 		printf("[BitSync:");
 
@@ -136,7 +140,7 @@ bool CMachineTypeMicrobee::SyncToBit(CFileReader* reader, bool verbose)
 int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 {	
 	int savePos = reader->CurrentPosition();
-
+	int bitPos = savePos;
 
 	// This is where the "rubber meets the road" so to speak
 	//
@@ -156,11 +160,14 @@ int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 	int actualCyclesRead = 0;	// The number of cycles read, including possible 1 extra for the lead slip
 	bool resynced = false;		// Have we lead slip resynced
 
+	// Get instrumentation file
+	CInstrumentation* instr = reader->GetInstrumentation();
+
 	// Are we in highspeed mode?
 	int speedMultiplier = 1;
-	if (savePos >= reader->_ctx->speedChangePos)
+	if (savePos >= reader->_cmd->speedChangePos)
 	{
-		switch (reader->_ctx->speedChangeSpeed)
+		switch (reader->_cmd->speedChangeSpeed)
 		{
 			case 300:
 				speedMultiplier = 1;
@@ -193,15 +200,16 @@ int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 		{
 			if (cycle=='L' && speedMultiplier==4)
 			{ 
+				if (instr)
+					instr->AddEntry(speedMultiplier, 0, bitPos, reader->CurrentPosition());
 				return 0;
 			}
 
 			if (cycle=='S' || cycle=='L')
 			{
 				bitKind = cycle;
-
 			}
-
+			
 			continue;
 		}
 
@@ -219,6 +227,8 @@ int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 			resynced = true;
 			bitKind=cycle;
 			cyclesRead--;
+			bitPos = reader->CurrentPosition();
+
 			continue;
 		}
 
@@ -261,13 +271,19 @@ int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 			}
 
 			// Success!
-			return bitKind == 'S' ? 1 : 0;
+			int bit = bitKind == 'S' ? 1 : 0;
+
+			if (instr)
+				instr->AddEntry(speedMultiplier, bit, bitPos, reader->CurrentPosition());
+			return bit;
 		}
 	}
 }
 
 bool CMachineTypeMicrobee::SyncToByte(CFileReader* reader, bool verbose)
-{
+{	
+	CSyncBlock sync(reader->GetInstrumentation());
+
 	if (verbose)
 		printf("[ByteSync:");
 
@@ -391,7 +407,10 @@ void CMachineTypeMicrobee::RenderCycleKind(CWaveWriter* writer, char kind)
 
 void CMachineTypeMicrobee::RenderBit(CWaveWriter* writer, unsigned char bit)
 {
-	writer->RenderWave( (bit ? 8 : 4) / (_baud/300), writer->SampleRate() / _baud);
+	if (writer->IsProfiled())
+		writer->RenderProfiledBit(bit, _baud/300);
+	else
+		writer->RenderWave( (bit ? 8 : 4) / (_baud/300), writer->SampleRate() / _baud);
 
 	/*
 	if (_baud == 300)
@@ -444,7 +463,7 @@ void CMachineTypeMicrobee::RenderByte(CWaveWriter* writer, unsigned char byte)
 
 
 // Command handler for dumping formatted header block and CRC checked data blocks
-int CMachineTypeMicrobee::ProcessBlocks(CContext* c)
+int CMachineTypeMicrobee::ProcessBlocks(CCommandStd* c)
 {
 	// Open files
 	if (!c->OpenFiles(resBytes))
@@ -674,17 +693,20 @@ int CMachineTypeMicrobee::ProcessBlocks(CContext* c)
 
 	printf("\n\n[eof]\n");
 
+	if (c->renderFile)
+		c->renderFile->Flush();
+
 	return 0;
 }
 
-void CMachineTypeMicrobee::PrepareWaveMetrics(CContext* c, CWaveReader* wf)
+void CMachineTypeMicrobee::PrepareWaveMetrics(CCommandStd* c, CTapeReader* wf)
 {
 	if (c->autoAnalyze)
 	{
 		WAVE_INFO info;
 
 		fprintf(stderr, "\n\nAnalysing wave data...");
-		AnalyseWave(wf, 0, 0, info);
+		AnalyseWave(wf->GetWaveReader(), c->_cycleDetector.GetMode(), 0, 0, info);
 		fprintf(stderr, "\n\n");
 
 		wf->SetCycleLengths(info.medianShortCycleLength, info.medianLongCycleLength);
@@ -702,7 +724,7 @@ int CMachineTypeMicrobee::CycleFrequency()
 	return 2400;
 }
 
-int CMachineTypeMicrobee::DcOffset(CWaveReader* wave)
+int CMachineTypeMicrobee::DcOffset(CTapeReader* wave)
 {
 	return 0;
 }

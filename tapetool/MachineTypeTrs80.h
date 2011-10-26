@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-// MachineTypeTrs80.h - declaration of CWaveReader class
+// MachineTypeTrs80.h - declaration of CTapeReader class
 
 #ifndef __MACHINETYPETRS80_H
 #define __MACHINETYPETRS80_H
@@ -16,7 +16,7 @@ public:
 
 	virtual const char* GetTapeFormatName() { return "cas"; };
 
-	virtual void PrepareWaveMetrics(CContext* c, CWaveReader* wf);
+	virtual void PrepareWaveMetrics(CCommandStd* c, CTapeReader* wf);
 
 	virtual bool SyncToBit(CFileReader* reader, bool verbose);
 	virtual int ReadBit(CFileReader* reader, bool verbose);
@@ -28,11 +28,11 @@ public:
 	virtual void RenderBit(CWaveWriter* writer, unsigned char bit);
 	virtual void RenderByte(CWaveWriter* writer, unsigned char byte);
 
-	virtual int ProcessBlocks(CContext* c);
+	virtual int ProcessBlocks(CCommandStd* c);
 
-	bool ProcessSystemBlock(CContext* c, bool verbose);
-	bool ProcessSourceBlock(CContext* c, bool verbose);
-	bool ProcessBasicBlock(CContext* c, bool verbose);
+	bool ProcessSystemBlock(CCommandStd* c, bool verbose);
+	bool ProcessSourceBlock(CCommandStd* c, bool verbose);
+	bool ProcessBasicBlock(CCommandStd* c, bool verbose);
 
 	int _syncBytePosition;
 	bool _eof;

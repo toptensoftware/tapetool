@@ -16,15 +16,15 @@ CMachineTypeGeneric::~CMachineTypeGeneric()
 {
 }
 
-bool CMachineTypeGeneric::OnPreProcess(CContext* c, Resolution resProcess)
+bool CMachineTypeGeneric::OnPreProcess(CCommandStd* c, Resolution resProcess)
 {
 	// Check the input file doesn't have a resolution finer than 1 bit
-	if (resProcess < resBytes && c->cmd->DoesTranslateFromWaveData())
+	if (resProcess < resBytes && c->DoesTranslateFromWaveData())
 	{
 		fprintf(stderr, "You must specify a machine type when working with audio or bit resolution data\n");
 		return false;
 	}
-	if (c->renderFile!=NULL && c->cmd->DoesTranslateToWaveData())
+	if (c->renderFile!=NULL && c->DoesTranslateToWaveData())
 	{
 		fprintf(stderr, "You must specify a machine type when rendering audio tape data\n");
 		return false;

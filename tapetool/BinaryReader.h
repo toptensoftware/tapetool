@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-// BinaryReader.h - declaration of CWaveReader class
+// BinaryReader.h - declaration of CTapeReader class
 
 #ifndef __BINARYREADER_H
 #define __BINARYREADER_H
@@ -10,7 +10,7 @@
 class CBinaryReader : public CFileReader
 {
 public:
-			CBinaryReader(CContext* c);
+			CBinaryReader(CCommandStd* cmc);
 	virtual ~CBinaryReader();
 
 	virtual bool Open(const char* filename, Resolution res);

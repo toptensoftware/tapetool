@@ -4,16 +4,18 @@
 #ifndef __COMMANDCYCLEKINDS_H
 #define __COMMANDCYCLEKINDS_H
 
-#include "Command.h"
+#include "CommandStd.h"
 
-class CCommandCycleKinds : public CCommand
+class CCommandCycleKinds : public CCommandStd
 {
 public:
-	CCommandCycleKinds(CContext* ctx) : CCommand(ctx)
+	CCommandCycleKinds(CContext* ctx) : CCommandStd(ctx)
 	{
 	}
 
 	virtual int Process();
+	virtual const char* GetCommandName() { return "cyclekinds"; }
+	virtual void ShowUsage();
 };
 
 #endif	// __COMMANDCYCLEKINDS_H

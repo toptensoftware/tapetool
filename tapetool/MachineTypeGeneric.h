@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-// MachineType.h - declaration of CWaveReader class
+// MachineType.h - declaration of CTapeReader class
 
 #ifndef __MACHINETYPEGENERIC_H
 #define __MACHINETYPEGENERIC_H
@@ -7,7 +7,7 @@
 #include "MachineType.h"
 #include "FileReader.h"
 #include "CommandBytes.h"
-#include "Context.h"
+#include "CommandStd.h"
 
 class CMachineTypeGeneric : public CMachineType
 {
@@ -17,14 +17,14 @@ public:
 
 	virtual bool IsGeneric() { return true; }
 
-	virtual bool OnPreProcess(CContext* c, Resolution res);
+	virtual bool OnPreProcess(CCommandStd* c, Resolution res);
 
 	virtual const char* GetTapeFormatName()
 	{
 		return NULL;
 	}
 
-	virtual void PrepareWaveMetrics(CContext* c, CWaveReader* wf)
+	virtual void PrepareWaveMetrics(CCommandStd* c, CTapeReader* wf)
 	{
 	}
 
@@ -60,9 +60,9 @@ public:
 	{
 	}
 
-	virtual int ProcessBlocks(CContext* c)
+	virtual int ProcessBlocks(CCommandStd* c)
 	{
-		CCommandBytes del(c);
+		CCommandBytes del(c->_ctx);
 		return del.Process();
 	}
 

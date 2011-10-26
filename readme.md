@@ -24,6 +24,7 @@ TapeTool can:
 	two or mode recordings of the same file to be compared and merged using a text diff tool.
 *   Synthesize a new audio recording in 300 or 1200 baud.
 *   Generate a binary dump of the data ie: .bee and .tap files.
+*   Repair an original wave recording by copying good sections over bad.
 *   Works with Microbee and TRS80
 
 Currently TapeTool only works with 300 baud input files, but it can generate 1200 baud wave files.
@@ -42,15 +43,7 @@ Windows executable:
 
 Usage: 
 
-    > tapetool [options] inputfile [outputfile]
-
-The type of output file is determined by the output file extension 
-
-    > tapetool --blocks --microbee myfile.wav myfile.tap
-
-    > tapetool --bytes --microbee myfile.wav myfile.txt
-
-The input file can be a .wav file, a binary file or the captured text output of a previous run of tapetool. 
+    > tapetool [COMMAND] [ARGS]
 
 
 ## Processing Wave Files
@@ -79,7 +72,64 @@ error details, resync data, header information etc...
 * Byte data is rendered as `0xHH` where HH is the hex value of the byte.
 * An input text file can contained mixed cyclekind, bit and byte data.
 
+## Commands
+
+The first command line argument specifies the type of command to execute:
+
+### wavestats
+
+Dumps various statistics about wave data including amplitude ranges, estimated long and short cycle
+lengths etc...
+
+### filter
+
+Renders a new wave file from an input wave file, applying the --smooth, --dcoffset and --amplify manipulations
+
+This can be used to apply multiple smoothing passes for example.
+
+### join
+
+Joins two wave files together - they must have the same sample rate and bit depth.
+
+### delete
+
+Deletes a section of a wave file.
+
+### samples
+
+Dumps the raw samples of a wave file (can't be used with text input data).  If `from` is specified
+dumps sample starting at that sample number.  Use --samplecount to specify how many samples to dump.
+
+The output of this processing kind can't be re-read by tapetool
+
+### cycles
+
+Dumps the length (in samples) of each cycle in a wave file.
+
+The output of this processing kind can't be re-read by tapetool
+
+### cyclekinds
+
+Dumps an input file as cycle kinds - short, long, ambiguous etc...
+
+### bits
+
+Dumps an input file as a series of `1` and `0` bits.
+
+### bytes
+
+Dumps the raw bytes of an input file, without checking headers, blocks, checksums
+
+### blocks
+
+Dumps the input file as a series of data blocks and computes and checks the checksum byte 
+of each block.  A full dump from the command wihtout errors indicates a successful load.
+
+
 ## Comamnd Line Arguments
+
+The available command line arguments depend on the selected command.  For more information on availability
+of an option on a command use `tapetool COMMAND --help`
 
 ### --trs80
 
@@ -93,50 +143,6 @@ rendering is supported.
 ### --inputformat:<fmt>
 
 Set the format of the input data ("cas", "tap", etc...)
-
-### --wavestats:[from]
-
-Dumps various statistics about wave data including amplitude ranges, estimated long and short cycle
-lengths etc...
-
-The output of this processing kind can't be re-read by tapetool
-
-### --filter[:from]
-
-Renders a new wave file from an input wave file, applying the --smooth, --dcoffset and --amplify manipulations
-
-This can be used to apply multiple smoothing passes for example.
-
-### --samples[:from]
-
-Dumps the raw samples of a wave file (can't be used with text input data).  If `from` is specified
-dumps sample starting at that sample number.  Use --samplecount to specify how many samples to dump.
-
-The output of this processing kind can't be re-read by tapetool
-
-### --cycles
-
-Dumps the length (in samples) of each cycle in a wave file.
-
-The output of this processing kind can't be re-read by tapetool
-
-### --cyclekinds
-
-Dumps an input file as cycle kinds - short, long, ambiguous etc...
-
-### --bits
-
-Dumps an input file as a series of `1` and `0` bits.
-
-### --bytes
-
-Dumps the raw bytes of an input file, without checking headers, blocks, checksums
-
-### --blocks
-
-The default processing kind, dumps the input file as a series of data blocks and computes
-and checks the checksum byte of each block.  A full dump from the command wihtout errors
-indicates a successful load.
 
 ### --smooth[:N]
 
@@ -190,9 +196,17 @@ are:
 Note that the local maximum/minimum options will nearly always require heavy, possibly multiple pass smoothing 
 to work effectively.  Use the --filter command to apply multiple smoothing passes.
 
+### --startsample:N
+
+Available on some commands to specify the sample number in the input wave file to start at.
+
+### --endsample:N
+
+Available on some commands to specify the sample number in the input wave file to stop at.
+
 ### --samplecount:N
 
-Use with --samples to control how many samples to dump.
+Available on some commands to specify the number of samples to process.
 
 ### --syncinfo
 
@@ -214,11 +228,10 @@ By default tapetool outputs comments indicating the current position in the inpu
 information however makes it impossible to compare to files using a text diff tool. --noposinfo
 suppresses this information.
 
-### --zc
+### --showcycles
 
 When output raw sample data, inserts a new line at each detected zero crossing, making it easier to 
 inspect audio wave form data.
-
 
 ### --leadingsilence:N
 
@@ -250,6 +263,18 @@ will automatically set the appropriate speed byte in the DGOS header.
 ### --sine
 
 Renders the wave as a sine waves instead of square waves.  
+
+### --createprofile
+
+Use with `bits` or `bytes` commands to generate a profile of the data in a wave file. The resulting
+profile can then be used to render a repaired version of the original wave file.
+
+### --useprofile:wavefile
+
+Render the output wave file using `wavefile` and the source for audio waveform data.  Tapetool will
+look for the longest matching sequences of bits to build a new, restored audio file.
+
+### --no-
 
 
 ## Examples

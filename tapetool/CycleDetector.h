@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-// CycleDetector.h - declaration of CWaveReader class
+// CycleDetector.h - declaration of CTapeReader class
 
 #ifndef __CYCLEDETECTOR_H
 #define __CYCLEDETECTOR_H

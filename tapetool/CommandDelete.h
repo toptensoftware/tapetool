@@ -1,26 +1,26 @@
 //////////////////////////////////////////////////////////////////////////
-// CommandFilter.h - declaration of CCommandFilter
+// CommandDelete.h - declaration of CCommandDelete
 
-#ifndef __COMMANDFILTER_H
-#define __COMMANDFILTER_H
+#ifndef __COMMANDDELETE_H
+#define __COMMANDDELETE_H
 
 #include "CommandWithRangedInputWaveFile.h"
 
-class CCommandFilter : public CCommandWithRangedInputWaveFile
+class CCommandDelete : public CCommandWithRangedInputWaveFile
 {
 public:
-	CCommandFilter();
+	CCommandDelete();
 
 	const char* _outputFileName;
 
 	virtual int Process();
 
 	virtual int AddFile(const char* filename);
-	virtual const char* GetCommandName() { return "filter"; };
+	virtual const char* GetCommandName() { return "delete"; };
 	virtual bool DoesUseCycleMode() { return false; }
 
 	void ShowUsage();
 };
 
-#endif	// __COMMANDFILTER_H
+#endif	// __COMMANDDELETE_H
 

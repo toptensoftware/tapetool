@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-// TapFileReader.h - declaration of CWaveReader class
+// TapFileReader.h - declaration of CTapeReader class
 
 #ifndef __TAPFILEREADER_H
 #define __TAPFILEREADER_H
@@ -10,7 +10,7 @@
 class CTapFileReader : public CBinaryReader
 {
 public:
-			CTapFileReader(CContext* c);
+			CTapFileReader(CCommandStd* cmd);
 	virtual ~CTapFileReader();
 
 	virtual bool Open(const char* filename, Resolution res);

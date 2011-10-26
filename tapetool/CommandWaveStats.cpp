@@ -7,35 +7,32 @@
 #include "CommandWaveStats.h"
 #include "WaveAnalysis.h"
 
+CCommandWaveStats::CCommandWaveStats()
+{
+}
 
 // Command handler for dumping samples
 int CCommandWaveStats::Process()
 {
-	// Open the file
-	if (!_ctx->OpenFiles(resSamples))
-		return 7;
-
-	if (!_ctx->file->IsWaveFile())
+	CWaveReader wave;
+	if (!CCommandWithInputWaveFile::OpenWaveReader(wave))
 	{
-		fprintf(stderr, "Can't dump samples from a text file");
 		return 7;
 	}
-
-	CWaveReader* wf = static_cast<CWaveReader*>(_ctx->file);
 
 	fprintf(stderr, "\n\nAnalysing wave data...");
 
 	// Analyse the wave
 	WAVE_INFO info;
-	AnalyseWave(wf, _ctx->from, _ctx->samples, info);
+	AnalyseWave(&wave, _cycleDetector.GetMode(), GetStartSample(), GetEndSample(), info);
 
 	fprintf(stderr, "\n\n");
 
 	printf("[\n");
-	printf("    Sample Rate:               %iHz\n", wf->GetSampleRate());
-	printf("    Bits Per Sample:           %i\n", wf->GetBytesPerSample() * 8);
+	printf("    Sample Rate:               %iHz\n", wave.GetSampleRate());
+	printf("    Bits Per Sample:           %i\n", wave.GetBytesPerSample() * 8);
 	printf("    Length:                    %i samples\n", info.totalSamples);
-	printf("    Duration:                  %.2f seconds\n", ((double)info.totalSamples)/wf->GetSampleRate() );
+	printf("    Duration:                  %.2f seconds\n", ((double)info.totalSamples)/wave.GetSampleRate() );
 	printf("    Total Cycles:              %i\n", info.totalCycles);
 	printf("    Average Samples/Cycle:     %i (%.1fHz)\n", info.avgSamplesPerCycle, info.avgCycleFrequency);
 	printf("    Min Amplitude:             %i\n", info.minAmplitude);
@@ -52,3 +49,15 @@ int CCommandWaveStats::Process()
 }
 
 
+void CCommandWaveStats::ShowUsage()
+{
+	printf("\nUsage: tapetool analyse [OPTIONS] INPUTFILE [OUTPUTFILE]\n");
+
+	printf("\nAnalyses a wave file and displays information about it.  The input file is required and must be 8 or 16 bit PCM\n");
+	printf("mono .wav file.  The output file is optional and if specified the output text will be redirected there.\n");
+
+	printf("\nOptions:\n");
+	printf("  --help                Show these usage instructions\n");
+	CCommandWithRangedInputWaveFile::ShowHelp();
+	printf("\n\n");
+}

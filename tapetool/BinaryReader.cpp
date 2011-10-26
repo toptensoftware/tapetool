@@ -6,7 +6,7 @@
 #include "BinaryReader.h"
 #include "Context.h"
 
-CBinaryReader::CBinaryReader(CContext* ctx) : CFileReader(ctx)
+CBinaryReader::CBinaryReader(CCommandStd* cmd) : CFileReader(cmd)
 {
 	_file = NULL;
 }
@@ -23,7 +23,7 @@ bool CBinaryReader::Open(const char* filename, Resolution res)
     _file=fopen(filename,"rb");
 	if (_file==NULL)
 	{
-	    fprintf(stderr, "Could not open %s\n", filename);
+	    fprintf(stderr, "Could not open '%s' - %s (%i)\n", filename, strerror(errno), errno);
 		return false;
 	}
 

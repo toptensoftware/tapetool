@@ -5,14 +5,14 @@
 
 #include "FileReader.h"
 #include "MachineType.h"
-#include "Context.h"
+#include "CommandStd.h"
 
 //////////////////////////////////////////////////////////////////////////
 // CFileReader
 
-CFileReader::CFileReader(CContext* ctx)
+CFileReader::CFileReader(CCommandStd* cmd)
 {
-	_ctx = ctx;
+	_cmd = cmd;
 }
 
 char CFileReader::ReadCycleKindChecked(bool verbose)
@@ -23,7 +23,7 @@ char CFileReader::ReadCycleKindChecked(bool verbose)
 	// Error?
 	if (kind=='<' || kind=='>')
 	{
-		if (_ctx->allowBadCycles && (LastCycleLen() >2 && LastCycleLen() < 200))
+		if (_cmd->allowBadCycles && (LastCycleLen() >2 && LastCycleLen() < 200))
 		{
 			return kind;
 		}
@@ -38,20 +38,20 @@ char CFileReader::ReadCycleKindChecked(bool verbose)
 
 bool CFileReader::SyncToBit(bool verbose)
 {
-	return _ctx->machine->SyncToBit(this, verbose);
+	return _cmd->machine->SyncToBit(this, verbose);
 }
 
 int CFileReader::ReadBit(bool verbose)
 {
-	return _ctx->machine->ReadBit(this, verbose);
+	return _cmd->machine->ReadBit(this, verbose);
 }
 
 bool CFileReader::SyncToByte(bool verbose)
 {
-	return _ctx->machine->SyncToByte(this, verbose);
+	return _cmd->machine->SyncToByte(this, verbose);
 }
 
 int CFileReader::ReadByte(bool verbose)
 {
-	return _ctx->machine->ReadByte(this, verbose);
+	return _cmd->machine->ReadByte(this, verbose);
 }

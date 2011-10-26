@@ -5,7 +5,7 @@
 
 #include "TextReader.h"
 
-CTextReader::CTextReader(CContext* ctx) : CFileReader(ctx)
+CTextReader::CTextReader(CCommandStd* cmd) : CFileReader(cmd)
 {
 	_res = resBytes;
 	_dataFormat[0]='\0';
@@ -54,7 +54,7 @@ bool CTextReader::Open(const char* filename, Resolution res)
     FILE* file=fopen(filename,"rt");
 	if (file==NULL)
 	{
-	    fprintf(stderr, "Could not open %s\n", filename);
+	    fprintf(stderr, "Could not open '%s' - %s (%i)\n", filename, strerror(errno), errno);
 		return false;
 	}
 
