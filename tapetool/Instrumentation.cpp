@@ -199,7 +199,12 @@ bool CInstrumentation::SaveText(const char* filename, int checkVal)
 		for (int j=0; j<sect->_entryCount; j++)
 		{
 			INSTR_ENTRY* entry = &_entries[sect->_firstEntry + j];
-			fprintf(file, "  Entry at %i is %i\n", entry->_offset, entry->_kind);
+			fprintf(file, "  %i:%i", entry->_offset, entry->_kind);
+			if (entry->_kind!=-1)
+			{
+				fprintf(file, " (%i)", entry[1]._offset - entry->_offset);
+			}
+			fprintf(file, "\n");
 		}
 	}
 

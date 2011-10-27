@@ -49,6 +49,7 @@ public:
 	int speedChangeSpeed;
 	bool _includeProfiledLeadIn;
 	bool _includeProfiledLeadOut;
+	bool _strict;
 	CContext* _ctx;
 
 

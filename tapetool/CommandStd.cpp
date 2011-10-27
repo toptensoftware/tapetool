@@ -49,7 +49,7 @@ CCommandStd::CCommandStd(CContext* ctx)
 	binaryFile = NULL;
 	_includeProfiledLeadIn = true;
 	_includeProfiledLeadOut = true;
-
+	_strict = false;
 }
 
 CCommandStd::~CCommandStd()
@@ -156,6 +156,10 @@ int CCommandStd::AddSwitch(const char* arg, const char* val)
 	else if (_strcmpi(arg, "no-profiled-leadout")==0)
 	{
 		_includeProfiledLeadOut = false;
+	}
+	else if (_strcmpi(arg, "strict")==0)
+	{
+		_strict = true;
 	}
 	else
 	{
@@ -437,7 +441,8 @@ void CCommandStd::ShowCommonUsage()
 	printf("\nWave Input Options:\n");
 	CCommandWithInputWaveFile::ShowHelp();
 	printf("  --noanalyze           determine cycle length by analysis (don't trust sample rate)\n");
-	printf("  --allowbadcycles      dont limit check cycle lengths (within reason)\n");
+	printf("  --allowbadcycles      don't limit check cycle lengths (within reason)\n");
+	printf("  --strict              strictly convert cycle patterns to bits\n");
 	printf("  --cyclefreq:N         explicitly set the short cycle frequency\n");
 	printf("  --speedchangepos:N    specify an explicit speed change at N\n");
 	printf("  --speedchangespeed:N  specify the new speed (in baud) at the speed change point\n");

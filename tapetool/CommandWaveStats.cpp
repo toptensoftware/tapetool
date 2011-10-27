@@ -15,7 +15,7 @@ CCommandWaveStats::CCommandWaveStats()
 int CCommandWaveStats::Process()
 {
 	CWaveReader wave;
-	if (!CCommandWithInputWaveFile::OpenWaveReader(wave))
+	if (!CCommandWithRangedInputWaveFile::OpenWaveReader(wave))
 	{
 		return 7;
 	}

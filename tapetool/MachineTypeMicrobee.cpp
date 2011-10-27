@@ -208,13 +208,20 @@ int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 			if (cycle=='S' || cycle=='L')
 			{
 				bitKind = cycle;
+				continue;
+			}
+
+			if (reader->_cmd->_strict)
+			{
+				if (verbose)
+					printf("[strict mode leading bit error at %i - expected S or L, found '%c']", savePos, cycle);
 			}
 			
 			continue;
 		}
 
 		// Allow a bit resync after the first cycle (only in 300 baud mode)
-		if (speedMultiplier==1 && cyclesRead == 2 && ((cycle=='S' && bitKind=='L') || (cycle=='L' && bitKind=='S')))
+		if (!reader->_cmd->_strict && speedMultiplier==1 && cyclesRead == 2 && ((cycle=='S' && bitKind=='L') || (cycle=='L' && bitKind=='S')))
 		{
 			if (resynced)
 			{
@@ -228,6 +235,11 @@ int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 			bitKind=cycle;
 			cyclesRead--;
 			bitPos = reader->CurrentPosition();
+
+			/*
+			if (instr!=NULL)
+				instr->SectionBreak();
+			*/
 
 			continue;
 		}
@@ -264,17 +276,28 @@ int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 		// Trailing cycle
 		if (cyclesRead == expectedCycles)
 		{
-			// Conflict? Trailing resync
-			if (cycle != bitKind && (cycle=='S' || cycle=='L'))
+			if (reader->_cmd->_strict && cycle!=bitKind)
 			{
-				reader->Seek(currentCyclePos);
+				if (verbose)
+					printf("[strict mode trailing bit error at %i - expected '%c', found '%c']", savePos, bitKind, cycle);
 			}
+
 
 			// Success!
 			int bit = bitKind == 'S' ? 1 : 0;
 
-			if (instr)
-				instr->AddEntry(speedMultiplier, bit, bitPos, reader->CurrentPosition());
+			// Conflict? Trailing resync
+			if (cycle != bitKind && (cycle=='S' || cycle=='L'))
+			{
+				reader->Seek(currentCyclePos);
+				//if (instr)
+				//	instr->SectionBreak();
+			}
+			else
+			{
+				if (instr)
+					instr->AddEntry(speedMultiplier, bit, bitPos, reader->CurrentPosition());
+			}
 			return bit;
 		}
 	}

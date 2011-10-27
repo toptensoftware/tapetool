@@ -101,7 +101,7 @@ int CContext::ProcessCommandLineArg(const char* arg)
 			{
 				_cmd = new CCommandSamples();
 			}
-			else if (_strcmpi(arg, "analyse")==0)
+			else if (_strcmpi(arg, "analyze")==0)
 			{
 				_cmd = new CCommandWaveStats();
 			}
@@ -191,7 +191,7 @@ void CContext::ShowUsage()
 
 	printf("\nCommands:\n");
 	printf("  samples            Prints samples from a wave file.\n");
-	printf("  analyse            Prints wave file statistics.\n");
+	printf("  analyze            Prints wave file statistics.\n");
 	printf("  filter             Copies and filters all or part of a wave file.\n");
 	printf("  join               Join two wave files into a new wave file.\n");
 	printf("  bits               Processes a file at bit resolution.\n");

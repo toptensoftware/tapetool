@@ -140,10 +140,8 @@ void CTapeReader::Close()
 			strcpy(temp, _wave.GetFileName());
 			strcat(temp, ".profile");
 			_instrumentation->Save(temp, _wave.GetTotalSamples());
-			/*
 			strcat(temp, ".txt");
 			_instrumentation->SaveText(temp, _wave.GetTotalSamples());
-			*/
 		}
 
 		delete _instrumentation;
