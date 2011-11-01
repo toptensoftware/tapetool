@@ -4,12 +4,23 @@
 #include "precomp.h"
 
 #include "TimeSynchronizer.h"
-#include "SincResample.h"
 #include "WaveReader.h"
 #include "WaveWriter.h"
 
-// We need extra samples at the start/end for sinc resampler
-#define EXTRA_SAMPLES 8192
+void linear_resample(short* dest, short* source, int oldLen, int newLen)
+{
+	double scale = double(oldLen-1) /double(newLen-1);
+	for (int i=0; i<newLen-1; i++)
+	{
+		double pos = scale * i;
+		int prev = source[int(pos)];
+		int next = source[int(pos+1)];
+		*dest++ = short(prev + (next-prev) * (pos - floor(pos)));
+	}
+
+	*dest++ = source[oldLen-1];
+}
+
 
 
 CTimeSynchronizer::CTimeSynchronizer()
@@ -21,14 +32,7 @@ CTimeSynchronizer::CTimeSynchronizer()
 	_sampleCount = 0;
 	_samplesAllocated = 0;
 
-	// Add extra samples at the start
-	for (int i=0; i<EXTRA_SAMPLES; i++)
-	{
-		AddSample(0);
-	}
-
 	_dest = NULL;
-	_sinc = NULL;
 }
 
 CTimeSynchronizer::~CTimeSynchronizer()
@@ -37,15 +41,11 @@ CTimeSynchronizer::~CTimeSynchronizer()
 		free(_syncPoints);
 	if (_samples!=NULL)
 		free(_samples);
-	if (_sinc)
-		delete _sinc;
 }
 
-void CTimeSynchronizer::Init(CWaveWriter* dest, SrcQuality qual)
+void CTimeSynchronizer::Init(CWaveWriter* dest)
 {
 	_dest = dest;
-	_sinc = CreateSincCurve(srcQualityGood);
-
 }
 
 void CTimeSynchronizer::AddSample(short sample)
@@ -70,15 +70,6 @@ void CTimeSynchronizer::AddSample(short sample)
 
 void CTimeSynchronizer::AddSyncPoint(double actual, double expected)
 {
-	if (actual<1)
-	{
-		int i=3;
-	}
-
-	// Allow for extra samples at the start
-	actual += EXTRA_SAMPLES;
-	expected += EXTRA_SAMPLES;
-
 	if (_syncPointCount+1 >= _syncPointAllocated)
 	{
 		if (_syncPoints)
@@ -101,12 +92,6 @@ void CTimeSynchronizer::AddSyncPoint(double actual, double expected)
 
 void CTimeSynchronizer::Complete()
 {
-	// Add extra samples at end
-	for (int i=0; i<EXTRA_SAMPLES; i++)
-	{
-		AddSample(0);
-	}
-
 	// Resample all cycles
 	for (int i=1; i<_syncPointCount; i++)
 	{
@@ -129,6 +114,11 @@ void CTimeSynchronizer::Complete()
 		else
 		{
 			short new_samples[1024];
+
+
+			linear_resample(new_samples, _samples + (int)ptPrev->_actual, (int)sourceSamples, (int)destSamples);
+
+			/*
 			SincResample_NIS(
 				new_samples,					// output buffer
 				_samples + (int)ptPrev->_actual,// input buffer
@@ -139,6 +129,7 @@ void CTimeSynchronizer::Complete()
 				_sinc,							// The curve
 				1								// number of channels
 				);
+			*/
 
 
 			for (int i=0; i<int(destSamples); i++)

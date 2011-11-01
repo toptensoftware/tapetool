@@ -38,7 +38,6 @@
     <ClCompile Include="CommandCycleKinds.cpp" />
     <ClCompile Include="CommandCycles.cpp" />
     <ClCompile Include="CommandSamples.cpp" />
-    <ClCompile Include="SincResample.cpp" />
     <ClCompile Include="tapetool.cpp" />
     <ClCompile Include="TapFileReader.cpp" />
     <ClCompile Include="TextReader.cpp" />
@@ -77,7 +76,6 @@
     <ClInclude Include="MachineTypeMicrobee.h" />
     <ClInclude Include="MachineTypeTrs80.h" />
     <ClInclude Include="precomp.h" />
-    <ClInclude Include="SincResample.h" />
     <ClInclude Include="TapFileReader.h" />
     <ClInclude Include="TextReader.h" />
     <ClInclude Include="WaveAnalysis.h" />

@@ -5,7 +5,6 @@
 
 #include "WaveWriterProfiled.h"
 #include "TimeSynchronizer.h"
-#include "SincResample.h"
 
 CWaveWriterProfiled::CWaveWriterProfiled()
 {
@@ -64,7 +63,7 @@ void CWaveWriterProfiled::SetFixCycleTiming(bool value)
 		if (!_timeSync)
 		{
 			_timeSync = new CTimeSynchronizer();
-			_timeSync->Init(this, srcQualityGood);
+			_timeSync->Init(this);
 		}
 	}
 	else
@@ -141,12 +140,6 @@ void CWaveWriterProfiled::RenderProfiledBit(int speed, int bit)
 
 void CWaveWriterProfiled::CopySamples(int offset, int count, const char* type, int entries)
 {
-	int _shouldBe = CWaveWriter::CurrentPosition();
-	if (_currentSampleNumber != _shouldBe)
-	{
-		int x = 3;
-	}
-
 	_slices++;
 	printf("%4i %-10s %10i %10i %10i to %10i -> %10i to %10i %3i\n", _slices, type, count, entries, offset, offset + count, _currentSampleNumber, _currentSampleNumber+count, _entriesMatched * 100 / _totalEntries);
 
@@ -170,12 +163,6 @@ void CWaveWriterProfiled::CopySamples(int offset, int count, const char* type, i
 	}
 
 	_currentSampleNumber += count;
-
-	_shouldBe = CWaveWriter::CurrentPosition();
-	if (_currentSampleNumber != _shouldBe)
-	{
-		int x = 3;
-	}
 }
 
 bool CWaveWriterProfiled::Flush()
@@ -270,26 +257,6 @@ bool CWaveWriterProfiled::Flush()
 					_timeSync->AddSyncPoint(syncActual, syncExpected);
 				}
 			}
-
-			/*
-			int show = matchLength;
-			if (show>40)
-				show = 40;
-
-			printf("          ");
-			for (int i=0; i<show; i++)
-			{
-				printf("%c", s->_entries[pos+i] ? '1' : '0');
-			}
-			printf("\n\n");
-
-			for (int i=0; i<show; i++)
-			{
-				printf("%c", e[i]._kind ? '1' : '0');
-			}
-			printf("\n");
-			*/
-
 
 			pos+=matchLength;
 		}

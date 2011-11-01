@@ -352,6 +352,7 @@ bool CInstrumentation::FindSequence(int speed, char* kinds, int count, INSTR_ENT
 					continue;
 
 				// Did we instrument an ambiguous cycle
+				/*
 				if (_entries[sect->_firstEntry + i + j]._kind=='?')
 				{
 					// Get the next and previous cycle kind
@@ -367,7 +368,6 @@ bool CInstrumentation::FindSequence(int speed, char* kinds, int count, INSTR_ENT
 				}
 
 				// Allow skipping one cycle
-				/*
 				if (next == kinds[j])
 				{
 					continue;
