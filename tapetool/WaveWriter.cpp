@@ -37,6 +37,16 @@ bool CWaveWriter::Create(const char* fileName, int sampleRate, int sampleSize)
 	return true;
 }
 
+int CWaveWriter::GetSampleRate()
+{
+	return _waveHeader.sampleRate;
+}
+
+int CWaveWriter::GetSampleSize()
+{
+	return _waveHeader.bitsPerSample;
+}
+
 void CWaveWriter::SetVolume(int volume)
 {
 	_amplitude = (_waveHeader.bitsPerSample==8 ? 0x7f : 0x7fff) * volume / 100;
@@ -214,7 +224,12 @@ void CWaveWriter::RenderByte(unsigned char byte)
 
 */
 
-void CWaveWriter::RenderProfiledBit(int bit, int speed)
+void CWaveWriter::RenderProfiledCycleKind(char ch)
+{
+	assert(false);
+}
+
+void CWaveWriter::RenderProfiledBit(int speed, int bit)
 {
 	assert(false);
 }

@@ -12,6 +12,7 @@ CCommandWithInputWaveFile::CCommandWithInputWaveFile() : _cycleDetector(cmZeroCr
 	_dcOffset = 0;
 	_amplify = 1;
 	_smoothing = 0;
+	_makeSquareWave = false;
 }
 
 bool CCommandWithInputWaveFile::OpenWaveReader(CWaveReader& wave, const char* filename)
@@ -39,6 +40,7 @@ bool CCommandWithInputWaveFile::OpenWaveReader(CWaveReader& wave)
 	wave.SetDCOffset(_dcOffset);
 	wave.SetAmplify(_amplify);
 	wave.SetSmoothingPeriod(_smoothing);
+	wave.SetMakeSquareWave(_makeSquareWave);
 
 	return true;
 }
@@ -70,6 +72,10 @@ int CCommandWithInputWaveFile::AddSwitch(const char* arg, const char* val)
 		}
 		_cycleDetector.Reset(mode);
 	}
+	else if (_strcmpi(arg, "tosquarewave")==0)
+	{
+		_makeSquareWave = true;
+	}
 	else
 	{
 		return CCommand::AddSwitch(arg, val);
@@ -93,6 +99,7 @@ void CCommandWithInputWaveFile::ShowHelp()
 	printf("  --smooth[:N]          smooth waveform with a moving average of N samples (N=3 if not specified)\n");
 	printf("  --dcoffset:N          offset sample values by this amount (DC Offset)\n");
 	printf("  --amplify:N           amplify input signal by N%% (eg: 50 halves the signal amplitude)\n");
+	printf("  --tosquarewave        convert the input signal to a square wave\n");
 	if (DoesUseCycleMode())
 	{
 	printf("  --cyclemode:mode      cycle detection mode\n");                 

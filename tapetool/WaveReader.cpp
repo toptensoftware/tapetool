@@ -14,6 +14,7 @@ CWaveReader::CWaveReader()
 	_smoothingPeriod = 0;
 	_smoothingBuffer = NULL;
 	_file = NULL;
+	_makeSquareWave = false;
 	Close();
 }
 
@@ -230,6 +231,16 @@ int CWaveReader::GetSmoothingPeriod()
 	return _smoothingPeriod;
 }
 
+void CWaveReader::SetMakeSquareWave(bool square)
+{
+	_makeSquareWave = square;
+}
+
+bool CWaveReader::GetMakeSquareWave()
+{
+	return _makeSquareWave;
+}
+
 void CWaveReader::SetDCOffset(int offset)
 {
 	_dc_offset = offset;
@@ -321,6 +332,11 @@ int CWaveReader::ReadSample()
 
 	// Translate it
 	sample = (short)(_amplify * (_dc_offset + sample));
+	if (_makeSquareWave)
+	{
+		int Range = _bytesPerSample == 1 ? 0x7f : 0x7fff;
+		sample = (int)((sample<0 ? -_amplify : _amplify) * Range);
+	}
 
 	// Are we smoothing?
 	if (_smoothingPeriod==0)

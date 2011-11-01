@@ -4,11 +4,14 @@
 #include "precomp.h"
 
 #include "Instrumentation.h"
+#include "FileReader.h"
+
 #include <ctype.h>
 
 // Constructor
 CInstrumentation::CInstrumentation()
 {
+	_res = resBits;
 	_sections = NULL;
 	_sectionCount = 0;
 	_entries = NULL;
@@ -17,6 +20,7 @@ CInstrumentation::CInstrumentation()
 	_inResync = 0;
 	_currentSection = NULL;
 	_pendingEndOffset = 0;
+	_totalUsed = 0;
 }
 
 // Destructor
@@ -24,6 +28,42 @@ CInstrumentation::~CInstrumentation()
 {
 	Reset();
 }
+
+int CInstrumentation::GetTotalEntries()
+{
+	return _entryCount;
+}
+
+int CInstrumentation::GetUsedEntries()
+{
+	return _totalUsed;
+}
+
+
+Resolution CInstrumentation::GetResolution()
+{
+	return _res;
+}
+
+void CInstrumentation::SetResolution(Resolution value)
+{
+	_res = value;
+}
+
+const char* CInstrumentation::GetResolutionString()
+{
+	switch (_res)
+	{
+		case resBits:
+			return "bits";
+
+		case resCycleKinds:
+			return "cycles";
+	}
+
+	return "??";
+}
+
 
 // Start a new section
 void CInstrumentation::SectionBreak()
@@ -50,8 +90,20 @@ void CInstrumentation::EnsureSection(int speed)
 	_currentSection->_speed=speed;
 }
 
+void CInstrumentation::AddBitEntry(int speed, int bit, int offset, int end_offset)
+{
+	if (_res == resBits)
+		AddEntryRaw(speed, (char)bit, offset, end_offset);
+}
+
+void CInstrumentation::AddCycleKindEntry(char kind, int offset, int end_offset)
+{
+	if (_res == resCycleKinds)
+		AddEntryRaw(0, kind, offset, end_offset);
+}
+
 // Add an entry to the current section
-void CInstrumentation::AddEntry(int speed, char kind, int offset, int end_offset)
+void CInstrumentation::AddEntryRaw(int speed, char kind, int offset, int end_offset)
 {
 	// Ignore if section not start
 	if (_inResync)
@@ -89,6 +141,7 @@ void CInstrumentation::AddEntryInternal(char kind, int offset)
 	INSTR_ENTRY* e = &_entries[_entryCount++];
 	e->_kind = kind;
 	e->_offset = offset;
+	e->_used = false;
 	_currentSection->_entryCount++;
 }
 
@@ -152,7 +205,7 @@ bool CInstrumentation::Save(const char* filename, int checkVal)
 	}
 	*/
 
-	printf("[Instrumentation found %i sections and a total of %i bits]\n", _sectionCount, _entryCount-_sectionCount);
+	printf("[Instrumentation found %i sections and a total of %i %s]\n", _sectionCount, _entryCount-_sectionCount, GetResolutionString());
 
 	FILE* file = fopen(filename, "wb");
 	if (file==NULL)
@@ -167,6 +220,7 @@ bool CInstrumentation::Save(const char* filename, int checkVal)
 	header._sectionCount = _sectionCount;
 	header._entryCount = _entryCount;
 	header._check = checkVal;
+	header._res = _res;
 	fwrite(&header, sizeof(header), 1, file);
 
 	// Write sections
@@ -191,6 +245,7 @@ bool CInstrumentation::SaveText(const char* filename, int checkVal)
 	}
 
 	fprintf(file, "check:%i\n", checkVal);
+	fprintf(file, "resolution:%s\n", GetResolutionString());
 
 	for (int i=0; i<_sectionCount; i++)
 	{
@@ -231,6 +286,25 @@ bool CInstrumentation::Load(const char* filename, int checkVal)
 		fclose(file);
 		return false;
 	}
+
+	// Check the check val
+	if (header._check!=checkVal)
+	{
+		fprintf(stderr, "Profile data doesn't match original wave file - please regenerate");
+		fclose(file);
+		return false;
+	}
+
+	// Check the resolution is ok
+	if (header._res != resBits && header._res != resCycleKinds)
+	{
+		fprintf(stderr, "Invalid profile data - please regenerate");
+		fclose(file);
+		return false;
+	}
+
+	// Store resolution
+	_res = header._res;
 
 	// Allocate memory
 	_sections = (INSTR_SECTION*)malloc(sizeof(INSTR_SECTION) * header._sectionCount);
@@ -273,8 +347,35 @@ bool CInstrumentation::FindSequence(int speed, char* kinds, int count, INSTR_ENT
 			int j;
 			for (j=0; j<sect->_entryCount-i && j<count; j++)
 			{
-				if (_entries[sect->_firstEntry + i + j]._kind!=kinds[j])
-					break;
+				// Same cycle kind
+				if (_entries[sect->_firstEntry + i + j]._kind==kinds[j])
+					continue;
+
+				// Did we instrument an ambiguous cycle
+				if (_entries[sect->_firstEntry + i + j]._kind=='?')
+				{
+					// Get the next and previous cycle kind
+					char prev = i+j>0 ? _entries[sect->_firstEntry + i + j - 1]._kind : 0;
+					char next = i+j+1<sect->_entryCount ? _entries[sect->_firstEntry + i + j + 1]._kind : 0;
+
+					// Is the ambiguous cycle is on S->?->L or L->?->S boundary
+					if ((prev=='L' || prev=='S') && (next=='S' || next=='L') && prev!=next)
+					{
+						if (j+1==count || next == kinds[j+1])
+							continue;
+					}
+				}
+
+				// Allow skipping one cycle
+				/*
+				if (next == kinds[j])
+				{
+					continue;
+				}
+				*/
+
+				// Mismatch
+				break;
 			}
 
 			// New best sequence?
@@ -283,11 +384,38 @@ bool CInstrumentation::FindSequence(int speed, char* kinds, int count, INSTR_ENT
 				start = _entries + sect->_firstEntry + i;
 				length = j;
 			}
+			else if (j==length)
+			{
+				// Work out which one is less used
+				int a = 0;
+				int b = 0;
+				for (int e=0; e<length; e++)
+				{
+					if (_entries[sect->_firstEntry + i + e]._used)
+						a++;
+					if (start[e]._used)
+						b++;
+				}
+
+				if (a<b)
+				{
+					start = _entries + sect->_firstEntry + i;
+					length = j;
+				}
+			}
 		}
 	}
 
 	if (start==NULL)
 		return false;
+
+	// Mark entries as used
+	for (int i=0; i<length; i++)
+	{
+		if (!start[i]._used)
+			_totalUsed++;
+		start[i]._used = true;
+	}
 
 	*pStart = start;
 	*pLength = length;

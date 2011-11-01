@@ -277,7 +277,7 @@ bool CMachineTypeTrs80::SyncToByte(CFileReader* reader, bool verbose)
 		printf("[ByteSync:");
 
 	// Sync to bit first
-	if (!SyncToBit(reader, verbose))
+	if (!reader->SyncToBit(verbose))
 		return false;
 
 	// Have we rewound after already synced
@@ -325,7 +325,7 @@ bool CMachineTypeTrs80::SyncToByte(CFileReader* reader, bool verbose)
 			// Rewind, skip one cycle and try again
 			reader->Seek(syncBit);
 			int kind = reader->ReadCycleKind();
-			if (!SyncToBit(reader, verbose))
+			if (!reader->SyncToBit(verbose))
 			{
 				if (verbose)
 					printf(":no bit sync]");

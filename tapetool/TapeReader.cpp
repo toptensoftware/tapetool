@@ -76,9 +76,10 @@ bool CTapeReader::Open(const char* filename, Resolution res)
 		return false;
 
  	// Open instrumentation file
-	if (_cmd->instrument)
+	if (_cmd->instrumentRes != resNA)
 	{
 		_instrumentation = new CInstrumentation();
+		_instrumentation->SetResolution(_cmd->instrumentRes);
 	}
 
 	return true;
@@ -101,6 +102,7 @@ void CTapeReader::Prepare()
 	printf("    smoothing period:        %i\n", _wave.GetSmoothingPeriod());
 	printf("    DC offset:               %i\n", _wave.GetDCOffset());
 	printf("    amplify:                 %.1f%%\n", _wave.GetAmplify()*100);
+	printf("    convert to square:       %s\n", _wave.GetMakeSquareWave() ? "yes" : "no");
 	printf("    cycle mode:              %s\n", CCycleDetector::ToString(_cmd->_cycleDetector.GetMode()));
 	if (_avgCycleLength!=0)
 	{
@@ -202,6 +204,20 @@ int CTapeReader::ReadCycleLen()
 
 char CTapeReader::ReadCycleKind()
 {
+	if (!_instrumentation)
+	{
+		return ReadCycleKindInternal();
+	}
+	else
+	{
+		int pos = CurrentPosition();
+		char kind = ReadCycleKindInternal();
+		_instrumentation->AddCycleKindEntry(kind, pos, CurrentPosition());
+		return kind;
+	}
+}
+char CTapeReader::ReadCycleKindInternal()
+{
 	// Remember offset of the current cycle
 	//int cycleOffset = CurrentSampleNumber();
 
@@ -235,3 +251,14 @@ int CTapeReader::LastCycleLen()
 	return _lastCycleLen;
 }
 
+bool CTapeReader::SyncToBit(bool verbose)
+{
+	CSyncBlock sync(_instrumentation);
+	return CFileReader::SyncToBit(verbose);
+}
+
+bool CTapeReader::SyncToByte(bool verbose)
+{
+	CSyncBlock sync(_instrumentation);
+	return CFileReader::SyncToByte(verbose);
+}

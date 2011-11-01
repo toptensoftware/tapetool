@@ -7,6 +7,7 @@
 #include "FileReader.h"
 
 class CWaveWriter;
+class CWaveWriterProfiled;
 class CTapeReader;
 class CContext;
 
@@ -37,6 +38,7 @@ public:
 	virtual void RenderByte(CWaveWriter* writer, unsigned char byte)=0;
 
 	virtual int ProcessBlocks(CCommandStd* c)=0;
+	virtual bool InitWaveWriterProfiled(CWaveWriterProfiled* w) { return false; }
 
 	virtual bool CanRenderSquare() { return false; }
 };

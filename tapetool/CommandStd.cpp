@@ -38,7 +38,7 @@ CCommandStd::CCommandStd(CContext* ctx)
 	renderSine = false;
 	cycle_freq = 0;
 	inputFormat = NULL;
-	instrument = false;
+	instrumentRes = resNA;
 	profileFileName = NULL;
 	speedChangePos= 0x7FFFFFFF;
 	speedChangeSpeed = 0;
@@ -50,6 +50,7 @@ CCommandStd::CCommandStd(CContext* ctx)
 	_includeProfiledLeadIn = true;
 	_includeProfiledLeadOut = true;
 	_strict = false;
+	_fixTiming = false;
 }
 
 CCommandStd::~CCommandStd()
@@ -141,9 +142,13 @@ int CCommandStd::AddSwitch(const char* arg, const char* val)
 	{
 		inputFormat	= val;
 	}
-	else if (_strcmpi(arg, "createprofile")==0)
+	else if (_strcmpi(arg, "createbitprofile")==0)
 	{
-		instrument = true;
+		instrumentRes = resBits;
+	}
+	else if (_strcmpi(arg, "createcycleprofile")==0)
+	{
+		instrumentRes = resCycleKinds;
 	}
 	else if (_strcmpi(arg, "useprofile")==0)
 	{
@@ -160,6 +165,10 @@ int CCommandStd::AddSwitch(const char* arg, const char* val)
 	else if (_strcmpi(arg, "strict")==0)
 	{
 		_strict = true;
+	}
+	else if (_strcmpi(arg, "fixtiming")==0)
+	{
+		_fixTiming = true;
 	}
 	else
 	{
@@ -306,7 +315,14 @@ bool CCommandStd::OpenRenderFile(const char* filename)
 			profiled->Close();
 			return false;
 		}
+		if (!machine->InitWaveWriterProfiled(profiled))
+		{
+			fprintf(stderr, "Profiled wave rendering not supported by this machine type");
+			profiled->Close();
+		}
 		renderFile = profiled;
+		if (_fixTiming)
+			profiled->SetFixCycleTiming(true);
 	}
 	else
 	{
@@ -446,7 +462,8 @@ void CCommandStd::ShowCommonUsage()
 	printf("  --cyclefreq:N         explicitly set the short cycle frequency\n");
 	printf("  --speedchangepos:N    specify an explicit speed change at N\n");
 	printf("  --speedchangespeed:N  specify the new speed (in baud) at the speed change point\n");
-	printf("  --createprofile       create instrumentation file for subsequent wave file repair\n");
+	printf("  --createbitprofile    create a bit resolution instrumentation file for subsequent wave file repair\n");
+	printf("  --createcycleprofile  create a cycle kind resolution instrumentation file for subsequent wave file repair\n");
 
 	printf("\nText Output Formatting:\n");
 	printf("  --syncinfo            show details of bit and byte sync operations\n");
@@ -464,8 +481,9 @@ void CCommandStd::ShowCommonUsage()
 	printf("  --baud:N              render baud rate\n");
 	printf("  --sine                render using sine (instead of square) waves\n");
 	printf("  --useprofile:wavefile render using samples from specified wave file (which must be first instrumented)\n");
-	printf("  --no-profiled-leadin  when doing profiled rendered, don't include the lead-in noise\n");
-	printf("  --no-profiled-leadout when doing profiled rendered, don't include the lead-out noise\n");
+	printf("  --no-profiled-leadin  don't include the lead-in noise in profiled rendering\n");
+	printf("  --no-profiled-leadout don't include the lead-out noise in profiled rendering\n");
+	printf("  --fixtiming           fix timing errors in profiled rendering by resampling bits or cycles\n");
 	printf("\n");
 
 }

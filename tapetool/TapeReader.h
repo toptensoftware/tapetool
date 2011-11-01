@@ -37,7 +37,10 @@ public:
 	virtual int LastCycleLen();
 	virtual void Prepare();
 	virtual CInstrumentation* GetInstrumentation() { return _instrumentation; }
+	virtual bool SyncToBit(bool verbose);
+	virtual bool SyncToByte(bool verbose);
 
+	char ReadCycleKindInternal();
 	void SetShortCycleFrequency(int freq);
 	void SetCycleLengths(int shortCycleSamples, int longCycleSamples);
 	void SetCycleMode(CycleMode mode);

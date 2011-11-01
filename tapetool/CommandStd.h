@@ -43,13 +43,14 @@ public:
 	int byteWrapIndex;
 	const char* outputExtension;
 	const char* inputFormat;
-	bool instrument;
+	Resolution instrumentRes;
 	const char* profileFileName;
 	int speedChangePos;
 	int speedChangeSpeed;
 	bool _includeProfiledLeadIn;
 	bool _includeProfiledLeadOut;
 	bool _strict;
+	bool _fixTiming;
 	CContext* _ctx;
 
 

@@ -4,10 +4,13 @@
 #ifndef __INSTRUMENTATION_H
 #define __INSTRUMENTATION_H
 
+enum Resolution;
+
 struct INSTR_ENTRY
 {
 	char			_kind;			// Bit: 0, 1
 	int				_offset;
+	bool			_used;
 };
 
 struct INSTR_SECTION
@@ -23,6 +26,7 @@ struct INSTR_FILE
 	int				_sectionCount;
 	int				_entryCount;
 	int				_check;
+	Resolution		_res;
 };
 
 class CInstrumentation
@@ -31,11 +35,20 @@ public:
 			CInstrumentation();
 	virtual ~CInstrumentation();	
 
+	Resolution GetResolution();
+	void SetResolution(Resolution value);
+	const char* GetResolutionString();
+
 	void SectionBreak();
-	void AddEntry(int speed, char kind, int offset, int end_offset);
+	void AddBitEntry(int speed, int bit, int offset, int end_offset);
+	void AddCycleKindEntry(char kind, int offset, int end_offset);
+	void AddEntryRaw(int speed, char kind, int offset, int end_offset);
 	void StartSync();
 	void EndSync();
+	int GetTotalEntries();
+	int GetUsedEntries();
 
+	Resolution		_res;
 	INSTR_SECTION*	_currentSection;
 	INSTR_SECTION*	_sections;
 	int				_sectionCount;
@@ -44,6 +57,7 @@ public:
 	int				_allocatedEntryCount;
 	int				_inResync;
 	int				_pendingEndOffset;
+	int				_totalUsed;
 
 	void Reset();
 	bool Save(const char* filename, int checkVal);

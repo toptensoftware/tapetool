@@ -4,6 +4,8 @@
 #ifndef __WAVEWRITER_H
 #define __WAVEWRITER_H
 
+#include "FileReader.h"
+
 #pragma pack(1)
 struct WAVEHEADER
 {
@@ -43,6 +45,9 @@ public:
 
 
 	bool Create(const char* fileName, int sampleRate, int sampleSize);
+	int GetSampleRate();
+	int GetSampleSize();
+
 	void SetVolume(int volume);
 	void SetSquare(bool square);
 	int GetAmplitude();
@@ -55,8 +60,9 @@ public:
 	int CurrentPosition();
 	
 	virtual void Close();
-	virtual bool IsProfiled() { return false; };
-	virtual void RenderProfiledBit(int bit, int speed);
+	virtual Resolution GetProfiledResolution() { return resNA; };
+	virtual void RenderProfiledCycleKind(char kind);
+	virtual void RenderProfiledBit(int speed, int bit);
 	virtual bool Flush() { return true; };
 };
 

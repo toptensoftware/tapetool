@@ -11,6 +11,7 @@
 #include "WaveAnalysis.h"
 #include "Instrumentation.h"
 #include "TapeReader.h"
+#include "WaveWriterProfiled.h"
 
 #pragma pack(1)
 struct TAPE_HEADER
@@ -44,7 +45,7 @@ void CMachineTypeMicrobee::SetOutputBaud(int baud)
 
 CFileReader* CMachineTypeMicrobee::CreateFileReader(CCommandStd* c, const char* pszExt)
 {
-	if (_stricmp(pszExt, ".tap")==0)
+	if (pszExt && _stricmp(pszExt, ".tap")==0)
 		return new CTapFileReader(c);
 	return NULL;
 }
@@ -139,6 +140,8 @@ bool CMachineTypeMicrobee::SyncToBit(CFileReader* reader, bool verbose)
 
 int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 {	
+	CInstrumentation* instr = reader->GetInstrumentation();
+
 	int savePos = reader->CurrentPosition();
 	int bitPos = savePos;
 
@@ -159,9 +162,6 @@ int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 	int cyclesRead = 0;			// The number of cycles in the current bit that have been read
 	int actualCyclesRead = 0;	// The number of cycles read, including possible 1 extra for the lead slip
 	bool resynced = false;		// Have we lead slip resynced
-
-	// Get instrumentation file
-	CInstrumentation* instr = reader->GetInstrumentation();
 
 	// Are we in highspeed mode?
 	int speedMultiplier = 1;
@@ -201,7 +201,7 @@ int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 			if (cycle=='L' && speedMultiplier==4)
 			{ 
 				if (instr)
-					instr->AddEntry(speedMultiplier, 0, bitPos, reader->CurrentPosition());
+					instr->AddBitEntry(speedMultiplier, 0, savePos, reader->CurrentPosition());
 				return 0;
 			}
 
@@ -235,11 +235,6 @@ int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 			bitKind=cycle;
 			cyclesRead--;
 			bitPos = reader->CurrentPosition();
-
-			/*
-			if (instr!=NULL)
-				instr->SectionBreak();
-			*/
 
 			continue;
 		}
@@ -290,14 +285,11 @@ int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 			if (cycle != bitKind && (cycle=='S' || cycle=='L'))
 			{
 				reader->Seek(currentCyclePos);
-				//if (instr)
-				//	instr->SectionBreak();
 			}
-			else
-			{
-				if (instr)
-					instr->AddEntry(speedMultiplier, bit, bitPos, reader->CurrentPosition());
-			}
+
+			if (instr)
+				instr->AddBitEntry(speedMultiplier, bit, savePos, reader->CurrentPosition());
+
 			return bit;
 		}
 	}
@@ -311,7 +303,7 @@ bool CMachineTypeMicrobee::SyncToByte(CFileReader* reader, bool verbose)
 		printf("[ByteSync:");
 
 	// Sync to next bit
-	if (!SyncToBit(reader, verbose))
+	if (!reader->SyncToBit(verbose))
 		return false;
 	if (verbose)
 		printf(" ");
@@ -351,7 +343,7 @@ bool CMachineTypeMicrobee::SyncToByte(CFileReader* reader, bool verbose)
 		if (skipBit<0)
 		{
 			// Failed to read a bit, need to resync...
-			if (!SyncToBit(reader, verbose))
+			if (!reader->SyncToBit(verbose))
 			{
 				if (verbose)
 					printf(":no bit sync]");
@@ -430,10 +422,22 @@ void CMachineTypeMicrobee::RenderCycleKind(CWaveWriter* writer, char kind)
 
 void CMachineTypeMicrobee::RenderBit(CWaveWriter* writer, unsigned char bit)
 {
-	if (writer->IsProfiled())
-		writer->RenderProfiledBit(bit, _baud/300);
+	int cycles = (bit ? 8 : 4) / (_baud/300);
+	if (writer->GetProfiledResolution() == resCycleKinds)
+	{
+		for (int i=0; i<cycles; i++)
+		{
+			writer->RenderProfiledCycleKind(bit ? 'S' : 'L');
+		}
+	}
+	else if (writer->GetProfiledResolution() ==resBits)
+	{
+		writer->RenderProfiledBit(_baud/300, bit);
+	}
 	else
-		writer->RenderWave( (bit ? 8 : 4) / (_baud/300), writer->SampleRate() / _baud);
+	{
+		writer->RenderWave( cycles, writer->SampleRate() / _baud);
+	}
 
 	/*
 	if (_baud == 300)
@@ -740,6 +744,30 @@ void CMachineTypeMicrobee::PrepareWaveMetrics(CCommandStd* c, CTapeReader* wf)
 	}
 }
 
+bool CMachineTypeMicrobee::InitWaveWriterProfiled(CWaveWriterProfiled* w)
+{
+	// Setup cycle lengths
+	w->SetCycleKindLength('L', double(w->GetSampleRate()) / 1200.0);
+	w->SetCycleKindLength('S', double(w->GetSampleRate()) / 2400.0);
+
+	// Setup bit lengths
+	w->SetBitLength(1, 4 * double(w->GetSampleRate()) / 1200.0);
+	w->SetBitLength(2, 2 * double(w->GetSampleRate()) / 1200.0);
+	w->SetBitLength(4, 1 * double(w->GetSampleRate()) / 1200.0);
+
+	/*
+	w->SetBitLength(1, 0, 8 * double(w->GetSampleRate()) / 2400.0);
+	w->SetBitLength(1, 1, 4 * double(w->GetSampleRate()) / 1200.0);
+
+	w->SetBitLength(2, 0, 4 * double(w->GetSampleRate()) / 2400.0);
+	w->SetBitLength(2, 1, 2 * double(w->GetSampleRate()) / 1200.0);
+	
+	w->SetBitLength(4, 0, 2 * double(w->GetSampleRate()) / 2400.0);
+	w->SetBitLength(4, 1, 1 * double(w->GetSampleRate()) / 1200.0);
+	*/
+
+	return true;
+}
 
 /*
 int CMachineTypeMicrobee::CycleFrequency()

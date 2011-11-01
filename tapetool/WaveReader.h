@@ -25,6 +25,8 @@ public:
 	double GetAmplify();
 	void SetSmoothingPeriod(int period);
 	int GetSmoothingPeriod();
+	void SetMakeSquareWave(bool square);
+	bool GetMakeSquareWave();
 
 
 	int CurrentPosition();
@@ -53,6 +55,7 @@ public:
 	int _smoothingBufferTotal;
 	int _dc_offset;
 	double _amplify;
+	bool _makeSquareWave;
 };
 
 #endif	// __WAVEREADER_H

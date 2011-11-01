@@ -26,6 +26,7 @@ public:
 	int _dcOffset;
 	double _amplify;
 	int _smoothing;
+	bool _makeSquareWave;
 	CCycleDetector _cycleDetector;
 };
 

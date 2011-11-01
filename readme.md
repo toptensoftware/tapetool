@@ -5,6 +5,11 @@
 TapeTool is a command line utility for processing recordings of Microbee tape files with the
 main objective of recovering lost data.  
 
+TapeTool is not an automatic data recovery/repair tool - rather it should be considered a toolkit of
+useful utilities for data extraction, repair and re-rendering of working audio tape recordings.
+
+Successful use on a damaged recording will generally involve much experimentation.
+
 TapeTool can:
 
 *	Read an 8 or 16 bit mono PCM wave file and convert it to text that can be redirected to a 
@@ -76,7 +81,7 @@ error details, resync data, header information etc...
 
 The first command line argument specifies the type of command to execute:
 
-### wavestats
+### analyze
 
 Dumps various statistics about wave data including amplitude ranges, estimated long and short cycle
 lengths etc...
@@ -155,8 +160,8 @@ Using this option can:
 
 ### --noanalyze
 
-By default, tapetool analyses audio files to automatically determine settings for how to best process
-the file. Use this option to prevent this auto analysis.
+By default, tapetool analyzes audio files to automatically determine settings for how to best process
+it. Use this option to prevent this auto analysis and use default settings for the machine type.
 
 ### --allowbadcycles
 
@@ -255,7 +260,7 @@ Sets the sample size of the rendered wave file.  ie: 8 or 16bit PCM data.
 
 Set the volume of the rendered wave file (as a percentage).  The default is 10%.
 
-### --baud:[300|1200]
+### --baud:N
 
 Sets the baud rate of the rendered wave file.  This option only works when processing in --blocks mode and
 will automatically set the appropriate speed byte in the DGOS header.
@@ -264,56 +269,121 @@ will automatically set the appropriate speed byte in the DGOS header.
 
 Renders the wave as a sine waves instead of square waves.  
 
-### --createprofile
+### --createbitprofile
 
-Use with `bits` or `bytes` commands to generate a profile of the data in a wave file. The resulting
+Use with `bits` or `bytes` commands to generate a bit resolution profile of the data in a wave file. The resulting
+profile can then be used to render a repaired version of the original wave file.
+
+### --createcycleprofile
+
+Use with `bits` or `bytes` or `cyclekinds` commands to generate a cycle resolution profile of the data in a wave file. The resulting
 profile can then be used to render a repaired version of the original wave file.
 
 ### --useprofile:wavefile
 
-Render the output wave file using `wavefile` and the source for audio waveform data.  Tapetool will
-look for the longest matching sequences of bits to build a new, restored audio file.
+Render the output wave file using `wavefile` as the source for audio waveform data.  Tapetool will
+look for the longest matching sequences of bits to build a new, restored audio file.  The wave file 
+must have been previously profiled with either --createbitprofile or --createcycleprofile
 
-### --no-
+### --gap
+
+Used with the `join` command to insert a silent gap between the two joined wave file.
+
+### --speedchangepos:N
+
+Declare that a speed change occurs at sample N.  
+
+eg: 1200 baud Microbee files start at 300 baud before switching to 1200 baud.  If processing at bit, byte
+resolutions tapetool doesn't have the required information to determine where the speed change occurs.  
+
+Use this option, combined with --speedchangespeed to explicitly declare where the change occurs.
+
+Only a single speed change is supported.  
+
+### --speedchangespeed:N
+
+Use with --speedchangepos to declare the baud rate at the change of speed.
+
+### --no-profiled-leadin
+
+Don't include the lead-in noise in a profiled rendering.  By default, tapetool will include leading
+noise before the actual data in a profiled rendering.  Use thi option to omit this leading silence/noise.
+
+### --no-profiled-leadout
+
+Don't include the trailing lead-out noise in a profiled rendering.
+
+### --strict
+
+Generate errors and resync if cycle kinds don't match exactly the type required for a particular bit.
+
+### --fixtiming
+
+Use with profiled renderings to resample cycles and bit patterns onto the exact timing boundaries required.
 
 
 ## Examples
 
 Dump the blocks from a clean working wave file:
 
-	> tapetool myfile.wav
+	> tapetool blocks --microbee myfile.wav
 
 Dump the raw bytes from a wave file to a text file
 
-	> tapetool --bytes --microbee myfile.wav myfile.bytes.txt
+	> tapetool bytes --microbee myfile.wav myfile.bytes.txt
 
 Dump the bits from a wave file, smoothing the audio data over 3 samples and using heuristics
 to calculate cycle lengths by analying the wave data rather than relying on the sample rate:
 
-	> tapetool --bits --microbee --smooth:3 --analyze myfile.wav myfile.bits.txt
+	> tapetool bits --microbee --smooth:3 --analyze myfile.wav myfile.bits.txt
 
 Convert the output of the previous example into a series of bytes:
 
-	> tapetool --bytes --microbee myfile.bits.txt myfile.bytes.txt
+	> tapetool bytes --microbee myfile.bits.txt myfile.bytes.txt
 
 Convert a byte stream into blocks and check the checksums, dump header info etc...
 
-	> tapetool --blocks --microbee myfile.bytes.txt
+	> tapetool blocks --microbee myfile.bytes.txt
 
 Render a wave file:
 
-	> tapetool --blocks --microbee myfile.bytes.txt myfile.wave
+	> tapetool blocks --microbee myfile.bytes.txt myfile.wave
 
 Create a ubee512 .tap file directly from a wave file:
 	
-	> tapetool --blocks --microbee myfile.wav myfile.tap
+	> tapetool blocks --microbee myfile.wav myfile.tap
 
 Create a NanoWasp .mac file from text file: (take note of the header info and enter it
 into NanoWasp web page where you configure the tape file).
 
-	> tapetool --blocks --microbee myfile.bits.txt myfile.mac
+	> tapetool blocks --microbee myfile.bits.txt myfile.mac
 
 Create an arbitrary format binary file from a text file of bits:
 
-	> tapetool --bytes --microbee myfile.bits.txt myfile.bin
+	> tapetool bytes --microbee myfile.bits.txt myfile.bin
 
+Join two wave files:
+
+	> tapetool join file1.wav file2.wav joined.wav
+
+Extract a part of a file, and apply an 8 sample smoothing:
+
+	> tapetool filter file.wav --startsample:10000 --endsample:20000 --smooth:8 output.wav
+
+Render a new wave file using the sample data from an original recording, assuming game.tap is a 
+tap file with the recovered/repaired data and game.wav is the original damaged recording.
+
+This is very experimental and mileage will vary depending on many factors.
+
+	> tapetool bytes --microbee game.wav --createbitprofile
+	> tapetool blocks --microbee game.tap game.repaired.wav --useprofile:game.wav
+
+
+If a bit resolution profiled rendering doesn't work, you can try cycle resolution with timing 
+correction:
+
+	> tapetool bytes --microbee game.wav --createcycleprofile
+	> tapetool blocks --microbee game.tap game.repaired.wav --useprofile:game.wav --fixtiming
+
+
+	

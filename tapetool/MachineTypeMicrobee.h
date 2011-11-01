@@ -33,6 +33,7 @@ public:
 	virtual int ProcessBlocks(CCommandStd* c);
 
 	virtual bool CanRenderSquare() { return true; }
+	virtual bool InitWaveWriterProfiled(CWaveWriterProfiled* w);
 
 	int _baud;
 };

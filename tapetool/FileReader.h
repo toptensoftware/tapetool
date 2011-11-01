@@ -10,6 +10,7 @@ class CCommandStd;
 // Various resolutions at which data can be processed
 enum Resolution
 {
+	resNA,
 	resSamples,
 	resCycles,
 	resCycleKinds,
