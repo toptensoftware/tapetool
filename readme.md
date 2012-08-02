@@ -32,8 +32,6 @@ TapeTool can:
 *   Repair an original wave recording by copying good sections over bad.
 *   Works with Microbee and TRS80
 
-Currently TapeTool only works with 300 baud input files, but it can generate 1200 baud wave files.
-
 ## Download
 
 Source code:
