@@ -11,84 +11,30 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BinaryReader.cpp" />
-    <ClCompile Include="Command.cpp" />
-    <ClCompile Include="CommandDelete.cpp" />
-    <ClCompile Include="CommandFilter.cpp" />
-    <ClCompile Include="CommandJoin.cpp" />
-    <ClCompile Include="CommandStd.cpp" />
-    <ClCompile Include="CommandWithInputWaveFile.cpp" />
-    <ClCompile Include="CommandWithRangedInputWaveFile.cpp" />
     <ClCompile Include="Context.cpp" />
-    <ClCompile Include="CycleDetector.cpp" />
-    <ClCompile Include="FileReader.cpp" />
-    <ClCompile Include="Instrumentation.cpp" />
-    <ClCompile Include="MachineType.cpp" />
-    <ClCompile Include="MachineTypeGeneric.cpp" />
-    <ClCompile Include="MachineTypeMicrobee.cpp" />
-    <ClCompile Include="MachineTypeTrs80.cpp" />
+    <ClCompile Include="Filter.cpp" />
     <ClCompile Include="precomp.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="CommandWaveStats.cpp" />
-    <ClCompile Include="CommandBits.cpp" />
-    <ClCompile Include="CommandBlocks.cpp" />
-    <ClCompile Include="CommandBytes.cpp" />
-    <ClCompile Include="CommandCycleKinds.cpp" />
-    <ClCompile Include="CommandCycles.cpp" />
-    <ClCompile Include="CommandSamples.cpp" />
-    <ClCompile Include="tapetool.cpp" />
-    <ClCompile Include="TapFileReader.cpp" />
-    <ClCompile Include="TextReader.cpp" />
-    <ClCompile Include="WaveAnalysis.cpp" />
-    <ClCompile Include="TapeReader.cpp" />
+    <ClCompile Include="tapetool2.cpp" />
     <ClCompile Include="WaveReader.cpp" />
-    <ClCompile Include="WaveWriterProfiled.cpp" />
     <ClCompile Include="WaveWriter.cpp" />
-    <ClCompile Include="TimeSynchronizer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\readme.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BinaryReader.h" />
-    <ClInclude Include="Command.h" />
-    <ClInclude Include="CommandBits.h" />
-    <ClInclude Include="CommandBlocks.h" />
-    <ClInclude Include="CommandBytes.h" />
-    <ClInclude Include="CommandDelete.h" />
-    <ClInclude Include="CommandFilter.h" />
-    <ClInclude Include="CommandJoin.h" />
-    <ClInclude Include="CommandStd.h" />
-    <ClInclude Include="CommandWithInputWaveFile.h" />
-    <ClInclude Include="CommandWithRangedInputWaveFile.h" />
     <ClInclude Include="Context.h" />
-    <ClInclude Include="CommandCycleKinds.h" />
-    <ClInclude Include="CommandCycles.h" />
-    <ClInclude Include="CommandSamples.h" />
-    <ClInclude Include="CommandWaveStats.h" />
-    <ClInclude Include="CycleDetector.h" />
-    <ClInclude Include="FileReader.h" />
-    <ClInclude Include="Instrumentation.h" />
-    <ClInclude Include="MachineType.h" />
-    <ClInclude Include="MachineTypeGeneric.h" />
-    <ClInclude Include="MachineTypeMicrobee.h" />
-    <ClInclude Include="MachineTypeTrs80.h" />
+    <ClInclude Include="Filter.h" />
     <ClInclude Include="precomp.h" />
-    <ClInclude Include="TapFileReader.h" />
-    <ClInclude Include="TextReader.h" />
-    <ClInclude Include="WaveAnalysis.h" />
-    <ClInclude Include="TapeReader.h" />
     <ClInclude Include="WaveReader.h" />
-    <ClInclude Include="WaveWriterProfiled.h" />
     <ClInclude Include="WaveWriter.h" />
-    <ClInclude Include="TimeSynchronizer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{B13F1938-E4D8-4FFE-8C29-D1CCE89B425F}</ProjectGuid>
+    <ProjectGuid>{3784cc82-d86c-47e1-b2e1-2aef11e46811}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>tapetool</RootNamespace>
+    <RootNamespace>tapetool2</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -116,11 +62,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>tapetool</TargetName>
+    <TargetName>tapetool2</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>tapetool</TargetName>
+    <TargetName>tapetool2</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

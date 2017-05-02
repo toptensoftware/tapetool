@@ -677,7 +677,7 @@ int CMachineTypeMicrobee::ProcessBlocks(CCommandStd* c)
 			if (byte<0 && i==bytesRemaining)
 			{
 				byte = 256-checksum;
-				printf("\n[guessing trailing checksum value]", byte);
+				printf("\n[guessing trailing checksum value]");
 			}
 			else if (byte<0)
 			{

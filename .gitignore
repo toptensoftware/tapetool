@@ -27,3 +27,4 @@ build.log
 *.sdf
 *.suo
 *.opensdf
+*.db

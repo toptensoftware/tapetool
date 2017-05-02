@@ -477,7 +477,7 @@ void CCommandStd::ShowCommonUsage()
 	printf("  --leadingzeros:N      render an additional N leading zeros\n");
 	printf("  --samplerate:N        render using sample rate of N (default = 24000)\n");
 	printf("  --samplesize:N        render using 8 or 16 bit samples (default = 8)\n");
-	printf("  --volume:N            render volume percent (default = 10%)\n");
+	printf("  --volume:N            render volume percent (default = 10%%)\n");
 	printf("  --baud:N              render baud rate\n");
 	printf("  --sine                render using sine (instead of square) waves\n");
 	printf("  --useprofile:wavefile render using samples from specified wave file (which must be first instrumented)\n");
