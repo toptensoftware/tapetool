@@ -140,6 +140,9 @@ bool CMachineTypeMicrobee::SyncToBit(CFileReader* reader, bool verbose)
 
 int CMachineTypeMicrobee::ReadBit(CFileReader* reader, bool verbose)
 {	
+	if (reader->GetResolution() == resBits)
+		return reader->ReadBit(verbose);
+
 	CInstrumentation* instr = reader->GetInstrumentation();
 
 	int savePos = reader->CurrentPosition();
